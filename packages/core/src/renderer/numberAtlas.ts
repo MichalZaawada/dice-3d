@@ -1,4 +1,4 @@
-import { GLYPH_STROKE_WIDTH, labelPolylines, type Point } from './glyphs.js';
+import { GLYPH_STROKE_WIDTH, labelExtent, labelPolylines, needsOrientationMarker, type LabelSource, type Point } from './glyphs.js';
 
 /**
  * Signed-distance atlas with one square cell per label.
@@ -15,32 +15,68 @@ export interface NumberAtlas {
   readonly height: number;
   /** One byte per pixel; 128 is the stroke outline, larger values are inside. */
   readonly pixels: Uint8Array;
-  /** Cell index of a label. */
-  cellOf(label: number): readonly [column: number, row: number];
+  /** Glyph units to cell fraction; {@link ATLAS_GLYPH_SCALE} unless a long label needs less. */
+  readonly glyphScale: number;
+  /** Cell index of a label key. */
+  cellOf(label: number | string): readonly [column: number, row: number];
+}
+
+/** One atlas entry: `key` identifies the cell, `source` is the text or symbol drawn into it. */
+export interface AtlasLabel {
+  readonly key: string;
+  readonly source: LabelSource;
+  readonly marker: boolean;
 }
 
 /** Fraction of the cell covered by one glyph unit. */
 export const ATLAS_GLYPH_SCALE = 0.5;
 const SPREAD_PX = 6;
+/** Fraction of the cell that the widest label may span. */
+const MAX_LABEL_SPAN = 0.94;
 
+/** Atlas of the numbers of a numeric die (D20: 1–20, with 6 and 9 underlined). */
 export function createNumberAtlas(labels: readonly number[], columns = 5, cellSize = 128): NumberAtlas {
-  const rows = Math.ceil(labels.length / columns);
+  const texts = labels.map(String);
+  return createLabelAtlas(
+    texts.map((text) => ({ key: text, source: text, marker: needsOrientationMarker(text, texts) })),
+    columns,
+    cellSize,
+  );
+}
+
+/** Uniform glyph scale so that the widest (or tallest) label fits its cell. */
+export function fittingScale(labels: readonly AtlasLabel[]): number {
+  let extent = 0;
+  for (const label of labels) {
+    const { width, top, bottom } = labelExtent(label.source, label.marker);
+    extent = Math.max(extent, width + GLYPH_STROKE_WIDTH, 2 * (Math.max(-top, bottom) + GLYPH_STROKE_WIDTH / 2));
+  }
+  return extent === 0 ? ATLAS_GLYPH_SCALE : Math.min(ATLAS_GLYPH_SCALE, MAX_LABEL_SPAN / extent);
+}
+
+export function createLabelAtlas(
+  labels: readonly AtlasLabel[],
+  columns = labels.length <= 25 ? 5 : Math.ceil(Math.sqrt(labels.length)),
+  cellSize = 128,
+): NumberAtlas {
+  const rows = Math.max(1, Math.ceil(labels.length / columns));
   const width = columns * cellSize;
   const height = rows * cellSize;
   const distance = new Float32Array(width * height).fill(Number.POSITIVE_INFINITY);
-  const unitPx = ATLAS_GLYPH_SCALE * cellSize;
+  const glyphScale = fittingScale(labels);
+  const unitPx = glyphScale * cellSize;
   const halfStrokePx = (GLYPH_STROKE_WIDTH / 2) * unitPx;
   const reach = halfStrokePx + SPREAD_PX + 1;
-  const cells = new Map<number, readonly [number, number]>();
+  const cells = new Map<string, readonly [number, number]>();
 
   labels.forEach((label, index) => {
     const column = index % columns;
     const row = Math.floor(index / columns);
-    cells.set(label, [column, row]);
+    cells.set(label.key, [column, row]);
     const originX = column * cellSize + cellSize / 2;
     const originY = row * cellSize + cellSize / 2;
     const toPx = ([x, y]: Point): Point => [originX + x * unitPx, originY + y * unitPx];
-    for (const line of labelPolylines(label)) {
+    for (const line of labelPolylines(label.source, label.marker)) {
       for (let i = 0; i + 1 < line.length; i++) {
         const a = toPx(line[i] as Point);
         const b = toPx(line[i + 1] as Point);
@@ -73,8 +109,9 @@ export function createNumberAtlas(labels: readonly number[], columns = 5, cellSi
     width,
     height,
     pixels,
+    glyphScale,
     cellOf(label) {
-      const cell = cells.get(label);
+      const cell = cells.get(String(label));
       if (!cell) throw new Error(`Label ${label} is not part of the atlas`);
       return cell;
     },

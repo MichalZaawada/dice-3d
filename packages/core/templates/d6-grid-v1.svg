@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="2048" height="1365" viewBox="0 0 2048 1365">
+  <title>dice-3d D6 skin template (d6-grid-v1)</title>
+  <desc>
+    Paint on the "artwork" layer and export the whole page as PNG with the same aspect ratio
+    (2048 x 1365 recommended). Hide the "guides" layer before exporting. Keep the "numbers"
+    layer for numbers: 'in-texture', or hide it for numbers: 'overlay'. Every face is upright in its
+    own cell; extend artwork slightly beyond the outlines to avoid seams. The dot marks the top of
+    each label. Cell positions and the aspect ratio must not change.
+  </desc>
+  <g id="artwork" inkscape:groupmode="layer" inkscape:label="artwork">
+    <rect id="artwork-background" x="0" y="0" width="2048" height="1365" fill="#f2ede4"/>
+  </g>
+  <g id="numbers" inkscape:groupmode="layer" inkscape:label="numbers" fill="none" stroke="#1d1b18" stroke-width="32.49" stroke-linecap="round" stroke-linejoin="round">
+    <path id="number-0-0" transform="translate(341.33 341.33) rotate(0)" d="M-43.32 -64.98 L8.66 -108.3 L8.66 108.3 M-38.99 108.3 L56.32 108.3"/>
+    <path id="number-1-0" transform="translate(1024 341.33) rotate(0)" d="M-58.58 -63.35 L-54.46 -74.35 L-48.3 -84.34 L-40.32 -92.96 L-30.83 -99.88 L-20.19 -104.84 L-8.79 -107.66 L2.94 -108.23 L14.56 -106.53 L25.63 -102.62 L35.74 -96.65 L44.52 -88.84 L51.62 -79.49 L56.79 -68.95 L59.83 -57.61 L60.62 -45.89 L59.15 -34.24 L55.45 -23.09 L49.68 -12.87 L-60.65 108.3 L64.98 108.3"/>
+    <path id="number-2-0" transform="translate(1706.67 341.33) rotate(0)" d="M-48.77 -77.98 L-40.96 -87.66 L-30.95 -95.42 L-19.26 -100.84 L-6.54 -103.62 L6.54 -103.62 L19.26 -100.84 L30.95 -95.42 L40.96 -87.66 L48.77 -77.98 L53.95 -66.89 L56.22 -55.01 L55.46 -42.96 L51.71 -31.4 L45.17 -20.94 L36.2 -12.16 L25.28 -5.53 L12.99 -1.4 L0 0 M0 0 L13.51 1.18 L26.43 4.68 L38.2 10.34 L48.29 17.92 L56.28 27.08 L61.8 37.42 L64.63 48.49 L64.63 59.81 L61.8 70.89 L56.28 81.23 L48.29 90.39 L38.2 97.96 L26.43 103.62 L13.51 107.12 L0 108.3 L-13.51 107.12 L-26.43 103.62 L-38.2 97.96 L-48.29 90.39 L-56.28 81.23"/>
+    <path id="number-3-0" transform="translate(341.33 1024) rotate(0)" d="M34.66 108.3 L34.66 -108.3 L-64.98 38.99 L64.98 38.99"/>
+    <path id="number-4-0" transform="translate(1024 1024) rotate(0)" d="M56.32 -108.3 L-43.32 -108.3 L-49.82 -6.5 L-49.78 -5.57 L-38.94 -16.5 L-26.05 -24.51 L-11.79 -29.17 L3.09 -30.25 L17.81 -27.67 L31.59 -21.58 L43.71 -12.3 L53.52 -0.32 L60.52 13.74 L64.32 29.12 L64.73 45.03 L61.74 60.62 L55.49 75.06 L46.31 87.61 L34.7 97.6 L21.25 104.49 L6.69 107.93 L-8.23 107.75 L-22.71 103.93 L-35.99 96.7 L-47.38 86.42 L-56.28 73.65"/>
+    <path id="number-5-0" transform="translate(1706.67 1024) rotate(0)" d="M64.98 38.99 L63.73 25.47 L60.04 12.46 L54.03 0.48 L45.95 -10.02 L36.1 -18.64 L24.87 -25.05 L12.68 -28.99 L0 -30.32 L-12.68 -28.99 L-24.87 -25.05 L-36.1 -18.64 L-45.95 -10.02 L-54.03 0.48 L-60.04 12.46 L-63.73 25.47 L-64.98 38.99 L-63.73 52.51 L-60.04 65.51 L-54.03 77.5 L-45.95 88 L-36.1 96.62 L-24.87 103.03 L-12.68 106.97 L0 108.3 L12.68 106.97 L24.87 103.03 L36.1 96.62 L45.95 88 L54.03 77.5 L60.04 65.51 L63.73 52.51 L64.98 38.99 M47.65 -101.8 L30.32 -98.51 L14.44 -93.68 L0 -87.32 L-13 -79.42 L-24.55 -69.99 L-34.66 -59.03 L-43.32 -46.53 L-50.54 -32.49 L-56.32 -16.92 L-60.65 0.18 L-63.54 18.82 L-64.98 38.99"/>
+  </g>
+  <g id="guides" inkscape:groupmode="layer" inkscape:label="guides (hide before export)">
+    <style>
+      #guides .cut { fill: none; stroke: #e0007a; stroke-width: 2; }
+      #guides .label-top { fill: #e0007a; }
+    </style>
+    <polygon id="guide-face-0" class="cut" points="635.59,635.59 635.59,47.08 47.08,47.08 47.08,635.59"/>
+    <circle class="label-top" transform="translate(341.33 341.33) rotate(0)" cx="0" cy="-181.95" r="13"/>
+    <polygon id="guide-face-1" class="cut" points="729.75,47.08 729.75,635.59 1318.25,635.59 1318.25,47.08"/>
+    <circle class="label-top" transform="translate(1024 341.33) rotate(0)" cx="0" cy="-181.95" r="13"/>
+    <polygon id="guide-face-2" class="cut" points="1412.41,47.08 1412.41,635.59 2000.92,635.59 2000.92,47.08"/>
+    <circle class="label-top" transform="translate(1706.67 341.33) rotate(0)" cx="0" cy="-181.95" r="13"/>
+    <polygon id="guide-face-3" class="cut" points="635.59,1318.25 635.59,729.75 47.08,729.75 47.08,1318.25"/>
+    <circle class="label-top" transform="translate(341.33 1024) rotate(0)" cx="0" cy="-181.95" r="13"/>
+    <polygon id="guide-face-4" class="cut" points="1318.25,1318.25 1318.25,729.75 729.75,729.75 729.75,1318.25"/>
+    <circle class="label-top" transform="translate(1024 1024) rotate(0)" cx="0" cy="-181.95" r="13"/>
+    <polygon id="guide-face-5" class="cut" points="1412.41,729.75 1412.41,1318.25 2000.92,1318.25 2000.92,729.75"/>
+    <circle class="label-top" transform="translate(1706.67 1024) rotate(0)" cx="0" cy="-181.95" r="13"/>
+  </g>
+</svg>

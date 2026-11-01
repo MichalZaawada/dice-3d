@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="2048" height="1247" viewBox="0 0 2048 1247">
+  <title>dice-3d D3 skin template (d3-grid-v1)</title>
+  <desc>
+    Paint on the "artwork" layer and export the whole page as PNG with the same aspect ratio
+    (2048 x 1247 recommended). Hide the "guides" layer before exporting. Keep the "numbers"
+    layer for numbers: 'in-texture', or hide it for numbers: 'overlay'. Every face is upright in its
+    own cell; extend artwork slightly beyond the outlines to avoid seams. The dot marks the top of
+    each label. Cell positions and the aspect ratio must not change.
+  </desc>
+  <g id="artwork" inkscape:groupmode="layer" inkscape:label="artwork">
+    <rect id="artwork-background" x="0" y="0" width="2048" height="1247" fill="#f2ede4"/>
+  </g>
+  <g id="numbers" inkscape:groupmode="layer" inkscape:label="numbers" fill="none" stroke="#1d1b18" stroke-width="34.39" stroke-linecap="round" stroke-linejoin="round">
+    <path id="number-0-0" transform="translate(512 311.63) rotate(0)" d="M-45.86 -68.78 L9.17 -114.64 L9.17 114.64 M-41.27 114.64 L59.61 114.64"/>
+    <path id="number-1-0" transform="translate(1536 311.63) rotate(0)" d="M-62.01 -67.06 L-57.65 -78.7 L-51.12 -89.28 L-42.68 -98.4 L-32.64 -105.73 L-21.37 -110.98 L-9.3 -113.96 L3.11 -114.56 L15.41 -112.76 L27.13 -108.63 L37.84 -102.31 L47.12 -94.04 L54.64 -84.14 L60.11 -72.98 L63.33 -60.98 L64.17 -48.57 L62.61 -36.24 L58.7 -24.44 L52.59 -13.62 L-64.2 114.64 L68.78 114.64"/>
+    <path id="number-2-0" transform="translate(512 934.88) rotate(0)" d="M-51.63 -82.54 L-43.36 -92.79 L-32.76 -101 L-20.39 -106.74 L-6.92 -109.68 L6.92 -109.68 L20.39 -106.74 L32.76 -101 L43.36 -92.79 L51.63 -82.54 L57.11 -70.81 L59.51 -58.23 L58.71 -45.47 L54.74 -33.23 L47.82 -22.17 L38.32 -12.87 L26.75 -5.85 L13.75 -1.48 L0 0 M0 0 L14.3 1.25 L27.98 4.96 L40.43 10.95 L51.12 18.97 L59.57 28.66 L65.42 39.61 L68.41 51.33 L68.41 63.31 L65.42 75.03 L59.57 85.98 L51.12 95.67 L40.43 103.69 L27.98 109.68 L14.3 113.39 L0 114.64 L-14.3 113.39 L-27.98 109.68 L-40.43 103.69 L-51.12 95.67 L-59.57 85.98"/>
+  </g>
+  <g id="guides" inkscape:groupmode="layer" inkscape:label="guides (hide before export)">
+    <style>
+      #guides .cut { fill: none; stroke: #e0007a; stroke-width: 2; }
+      #guides .label-top { fill: #e0007a; }
+    </style>
+    <polygon id="guide-face-0" class="cut" points="70.62,42.98 70.62,580.27 953.38,580.27 953.38,42.98"/>
+    <circle class="label-top" transform="translate(512 311.63) rotate(0)" cx="0" cy="-192.6" r="13.76"/>
+    <polygon id="guide-face-1" class="cut" points="1094.62,42.98 1094.62,580.27 1977.38,580.27 1977.38,42.98"/>
+    <circle class="label-top" transform="translate(1536 311.63) rotate(0)" cx="0" cy="-192.6" r="13.76"/>
+    <polygon id="guide-face-2" class="cut" points="70.62,666.23 70.62,1203.52 953.38,1203.52 953.38,666.23"/>
+    <circle class="label-top" transform="translate(512 934.88) rotate(0)" cx="0" cy="-192.6" r="13.76"/>
+  </g>
+</svg>

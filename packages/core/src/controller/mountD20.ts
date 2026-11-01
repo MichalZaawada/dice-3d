@@ -1,11 +1,11 @@
 import { D20Error, invalidArgument } from '../errors.js';
-import { D20_VALUES, d20FaceFrame } from '../geometry/d20.js';
+import { builtInDieModel, type DieModel } from '../geometry/dice.js';
 import type { DieRenderer } from '../renderer/renderer.js';
-import type { D20, D20Value } from '../types.js';
-import { createDieController } from './dieController.js';
+import type { D20, DieValue } from '../types.js';
+import { createDieController, type DieController } from './dieController.js';
 import type { DieEnvironment } from './environment.js';
 import { prepareSkin, type SourceInspector } from './skinValidation.js';
-import { assertD20Value, validateD20Options } from './validation.js';
+import { assertDieValue, validateDieOptions } from './validation.js';
 
 /** Window features used by the mount; a subset so tests can provide fakes. */
 export interface MountWindow {
@@ -31,15 +31,23 @@ function isElement(value: unknown): value is HTMLElement {
   );
 }
 
+/** Public lifecycle surface shared by `D20` and `Die`. */
+export type MountedDie = Omit<DieController<DieValue>, never>;
+
 /** DOM wiring of a D20: canvas, sizing, DPR and context-loss handling. */
 export function mountD20(container: unknown, options: unknown, deps: MountDependencies): D20 {
+  return mountDie(container, options, builtInDieModel('d20'), deps) as unknown as D20;
+}
+
+/** DOM wiring of any die: canvas, sizing, DPR and context-loss handling. */
+export function mountDie(container: unknown, options: unknown, model: DieModel, deps: MountDependencies): MountedDie {
   if (!isElement(container)) throw invalidArgument('container must be an HTMLElement');
-  const config = validateD20Options(options);
+  const config = validateDieOptions(options, model);
   const doc = container.ownerDocument;
 
   const canvas = doc.createElement('canvas');
   canvas.setAttribute('aria-hidden', 'true');
-  canvas.setAttribute('data-dice-3d', 'd20');
+  canvas.setAttribute('data-dice-3d', model.type);
   canvas.style.display = 'block';
   canvas.style.width = '100%';
   canvas.style.height = '100%';
@@ -48,7 +56,7 @@ export function mountD20(container: unknown, options: unknown, deps: MountDepend
   const validateSkin = (skin: unknown) =>
     prepareSkin(skin, {
       maxTextureSize: renderer.maxTextureSize,
-      values: D20_VALUES,
+      model,
       ...(deps.inspectSource ? { inspect: deps.inspectSource } : {}),
     });
 
@@ -75,15 +83,15 @@ export function mountD20(container: unknown, options: unknown, deps: MountDepend
     controller.fail(new D20Error('CONTEXT_LOST', 'The WebGL context was lost'));
   };
 
-  const controller = createDieController<D20Value>({
+  const controller = createDieController<DieValue>({
     initialValue: config.value,
     motion: config.motion,
     theme: config.theme,
     renderer,
     environment: deps.environment,
-    orientationOf: (value) => d20FaceFrame(value).orientation,
+    orientationsOf: (value, current) => model.orientations(value, current),
     validateValue: (value) => {
-      assertD20Value(value);
+      assertDieValue(model, value);
       return value;
     },
     prepareSkin: validateSkin,

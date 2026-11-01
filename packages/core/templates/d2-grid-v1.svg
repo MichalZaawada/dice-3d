@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="2048" height="1024" viewBox="0 0 2048 1024">
+  <title>dice-3d D2 skin template (d2-grid-v1)</title>
+  <desc>
+    Paint on the "artwork" layer and export the whole page as PNG with the same aspect ratio
+    (2048 x 1024 recommended). Hide the "guides" layer before exporting. Keep the "numbers"
+    layer for numbers: 'in-texture', or hide it for numbers: 'overlay'. Every face is upright in its
+    own cell; extend artwork slightly beyond the outlines to avoid seams. The dot marks the top of
+    each label. Cell positions and the aspect ratio must not change.
+  </desc>
+  <g id="artwork" inkscape:groupmode="layer" inkscape:label="artwork">
+    <rect id="artwork-background" x="0" y="0" width="2048" height="1024" fill="#f2ede4"/>
+  </g>
+  <g id="numbers" inkscape:groupmode="layer" inkscape:label="numbers" fill="none" stroke="#1d1b18" stroke-width="28.34" stroke-linecap="round" stroke-linejoin="round">
+    <path id="number-0-0" transform="translate(512 512) rotate(0)" d="M-37.79 -56.68 L7.56 -94.47 L7.56 94.47 M-34.01 94.47 L49.12 94.47"/>
+    <path id="number-1-0" transform="translate(1536 512) rotate(0)" d="M-51.1 -55.26 L-47.5 -64.85 L-42.12 -73.57 L-35.17 -81.08 L-26.89 -87.12 L-17.61 -91.45 L-7.67 -93.91 L2.56 -94.4 L12.7 -92.92 L22.36 -89.51 L31.18 -84.3 L38.83 -77.49 L45.02 -69.34 L49.53 -60.14 L52.18 -50.25 L52.88 -40.03 L51.59 -29.86 L48.37 -20.14 L43.33 -11.22 L-52.9 94.47 L56.68 94.47"/>
+  </g>
+  <g id="guides" inkscape:groupmode="layer" inkscape:label="guides (hide before export)">
+    <style>
+      #guides .cut { fill: none; stroke: #e0007a; stroke-width: 2; }
+      #guides .label-top { fill: #e0007a; }
+    </style>
+    <polygon id="guide-face-0" class="cut" points="953.38,512 944.9,425.89 919.78,343.09 878.99,266.78 824.1,199.9 757.22,145.01 680.91,104.22 598.11,79.1 512,70.62 425.89,79.1 343.09,104.22 266.78,145.01 199.9,199.9 145.01,266.78 104.22,343.09 79.1,425.89 70.62,512 79.1,598.11 104.22,680.91 145.01,757.22 199.9,824.1 266.78,878.99 343.09,919.78 425.89,944.9 512,953.38 598.11,944.9 680.91,919.78 757.22,878.99 824.1,824.1 878.99,757.22 919.78,680.91 944.9,598.11"/>
+    <circle class="label-top" transform="translate(512 512) rotate(0)" cx="0" cy="-158.7" r="11.34"/>
+    <polygon id="guide-face-1" class="cut" points="1103.1,598.11 1128.22,680.91 1169.01,757.22 1223.9,824.1 1290.78,878.99 1367.09,919.78 1449.89,944.9 1536,953.38 1622.11,944.9 1704.91,919.78 1781.22,878.99 1848.1,824.1 1902.99,757.22 1943.78,680.91 1968.9,598.11 1977.38,512 1968.9,425.89 1943.78,343.09 1902.99,266.78 1848.1,199.9 1781.22,145.01 1704.91,104.22 1622.11,79.1 1536,70.62 1449.89,79.1 1367.09,104.22 1290.78,145.01 1223.9,199.9 1169.01,266.78 1128.22,343.09 1103.1,425.89 1094.62,512"/>
+    <circle class="label-top" transform="translate(1536 512) rotate(0)" cx="0" cy="-158.7" r="11.34"/>
+  </g>
+</svg>

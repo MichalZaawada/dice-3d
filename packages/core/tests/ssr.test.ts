@@ -21,6 +21,13 @@ describe('server-side rendering safety', () => {
     expect(() => library.createD20({} as HTMLElement)).toThrow(
       expect.objectContaining({ name: 'D20Error', code: 'WEBGL_UNAVAILABLE' }),
     );
+    expect(() => library.createDie({} as HTMLElement, { type: 'd6' })).toThrow(
+      expect.objectContaining({ name: 'D20Error', code: 'WEBGL_UNAVAILABLE' }),
+    );
+    // Metadata and templates work on the server.
+    expect(library.getDieInfo('d12').values).toHaveLength(12);
+    expect(library.getDieTemplate('d8').faces).toHaveLength(8);
+    expect(library.createDieTemplateSvg('df')).toContain('<svg');
   });
 });
 

@@ -1,0 +1,115 @@
+{
+  "template": "d3-grid-v1",
+  "version": 1,
+  "die": "d3",
+  "description": "UV layout of the dice-3d D3 skin template. Coordinates are normalized; (0, 0) is the top-left corner of the image. Every face is upright in its own cell, in face index order.",
+  "width": 2048,
+  "height": 1247,
+  "aspectRatio": 1.6423416198877305,
+  "uvOrigin": "top-left",
+  "vertexConvention": "Face polygons are listed counter-clockwise on screen, in the order used by array skin layouts.",
+  "faces": [
+    {
+      "index": 0,
+      "value": 1,
+      "label": "1",
+      "uv": [
+        [
+          0.034483,
+          0.034469
+        ],
+        [
+          0.034483,
+          0.465332
+        ],
+        [
+          0.465517,
+          0.465332
+        ],
+        [
+          0.465517,
+          0.034469
+        ]
+      ],
+      "labels": [
+        {
+          "label": "1",
+          "center": [
+            0.25,
+            0.249901
+          ],
+          "rotation": 0,
+          "size": 458.559984
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "value": 2,
+      "label": "2",
+      "uv": [
+        [
+          0.534483,
+          0.034469
+        ],
+        [
+          0.534483,
+          0.465332
+        ],
+        [
+          0.965517,
+          0.465332
+        ],
+        [
+          0.965517,
+          0.034469
+        ]
+      ],
+      "labels": [
+        {
+          "label": "2",
+          "center": [
+            0.75,
+            0.249901
+          ],
+          "rotation": 0,
+          "size": 458.559984
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "value": 3,
+      "label": "3",
+      "uv": [
+        [
+          0.034483,
+          0.53427
+        ],
+        [
+          0.034483,
+          0.965133
+        ],
+        [
+          0.465517,
+          0.965133
+        ],
+        [
+          0.465517,
+          0.53427
+        ]
+      ],
+      "labels": [
+        {
+          "label": "3",
+          "center": [
+            0.25,
+            0.749702
+          ],
+          "rotation": 0,
+          "size": 458.559984
+        }
+      ]
+    }
+  ]
+}

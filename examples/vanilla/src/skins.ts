@@ -1,11 +1,22 @@
-import { D20_NET_V1, D20_VALUES, type D20Value, type FaceUV } from 'dice-3d';
+import { getDieTemplate, type DieTemplate, type DieType, type FaceUVPolygon } from 'dice-3d';
 
-/** Artwork painted on the d20-net-v1 template (a canvas is a valid skin source). */
-export function createTemplateArtwork(width = 2048): HTMLCanvasElement {
+function canvasFor(template: DieTemplate, width: number): { canvas: HTMLCanvasElement; context: CanvasRenderingContext2D } {
   const canvas = document.createElement('canvas');
   canvas.width = width;
-  canvas.height = width / D20_NET_V1.aspectRatio;
-  const context = canvas.getContext('2d')!;
+  canvas.height = Math.round(width / template.aspectRatio);
+  return { canvas, context: canvas.getContext('2d')! };
+}
+
+function tracePolygon(context: CanvasRenderingContext2D, uv: FaceUVPolygon, width: number, height: number): void {
+  context.beginPath();
+  uv.forEach(([u, v], index) => (index === 0 ? context.moveTo(u * width, v * height) : context.lineTo(u * width, v * height)));
+  context.closePath();
+}
+
+/** Artwork painted on the type's official template (a canvas is a valid skin source). */
+export function createTemplateArtwork(type: DieType, width = 2048): HTMLCanvasElement {
+  const template = getDieTemplate(type);
+  const { canvas, context } = canvasFor(template, width);
   const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
   gradient.addColorStop(0, '#1d4e89');
   gradient.addColorStop(1, '#7b2d74');
@@ -19,52 +30,53 @@ export function createTemplateArtwork(width = 2048): HTMLCanvasElement {
     context.lineTo(x + canvas.height, canvas.height);
     context.stroke();
   }
-  // A star near vertex A of every face shows that the artwork follows the face orientation.
-  for (const value of D20_VALUES) {
-    const [a, b, c] = D20_NET_V1.faces[value];
-    const x = (a[0] * 0.72 + ((b[0] + c[0]) / 2) * 0.28) * canvas.width;
-    const y = (a[1] * 0.72 + ((b[1] + c[1]) / 2) * 0.28) * canvas.height;
-    context.fillStyle = '#ffd166';
-    context.beginPath();
-    context.arc(x, y, canvas.width / 180, 0, Math.PI * 2);
-    context.fill();
+  // A dot above every label shows that the artwork follows the face orientation.
+  context.fillStyle = '#ffd166';
+  for (const face of template.faces) {
+    for (const label of face.labels) {
+      const angle = (label.rotation * Math.PI) / 180;
+      const distance = (label.size * 0.42 * canvas.width) / template.width;
+      const x = label.center[0] * canvas.width + Math.sin(angle) * distance;
+      const y = label.center[1] * canvas.height - Math.cos(angle) * distance;
+      context.beginPath();
+      context.arc(x, y, Math.max(2, (label.size * 0.05 * canvas.width) / template.width), 0, Math.PI * 2);
+      context.fill();
+    }
   }
   return canvas;
 }
 
 /**
- * A custom layout: twenty upright triangles in a 5 × 4 grid, each with its own
- * color and number drawn by the application (`numbers: 'in-texture'`).
+ * An explicit UV layout (one polygon per face, `numbers: 'in-texture'`):
+ * every face gets its own color and the application draws the labels.
  */
-export function createCustomAtlas(): { source: HTMLCanvasElement; layout: Record<D20Value, FaceUV> } {
-  const cell = 256;
-  const source = document.createElement('canvas');
-  source.width = cell * 5;
-  source.height = cell * 4;
-  const context = source.getContext('2d')!;
-  const layout = {} as Record<D20Value, FaceUV>;
+export function createCustomAtlas(type: DieType, width = 1536): { source: HTMLCanvasElement; layout: FaceUVPolygon[] } {
+  const template = getDieTemplate(type);
+  const { canvas, context } = canvasFor(template, width);
   context.fillStyle = '#222';
-  context.fillRect(0, 0, source.width, source.height);
-  for (const value of D20_VALUES) {
-    const column = (value - 1) % 5;
-    const row = Math.floor((value - 1) / 5);
-    const x = column * cell;
-    const y = row * cell;
-    context.fillStyle = `hsl(${value * 18} 60% 42%)`;
-    context.fillRect(x, y, cell, cell);
-    context.fillStyle = '#ffffff';
-    context.font = `bold ${cell * 0.28}px system-ui, sans-serif`;
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.fillText(String(value), x + cell / 2, y + cell * 0.62);
-    if (value === 6 || value === 9) context.fillRect(x + cell * 0.38, y + cell * 0.78, cell * 0.24, cell * 0.03);
-    // A (top), B (bottom-left), C (bottom-right), counter-clockwise on screen.
-    const inset = cell * 0.04;
-    layout[value] = [
-      [(x + cell / 2) / source.width, (y + inset) / source.height],
-      [(x + inset) / source.width, (y + cell - inset) / source.height],
-      [(x + cell - inset) / source.width, (y + cell - inset) / source.height],
-    ];
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  const count = template.faces.length;
+  for (const face of template.faces) {
+    context.fillStyle = `hsl(${Math.round((face.index * 360) / count)} 60% 42%)`;
+    tracePolygon(context, face.uv, canvas.width, canvas.height);
+    context.fill();
+    // Bleed: stroke the outline in the same color to avoid seams.
+    context.strokeStyle = context.fillStyle;
+    context.lineWidth = 6;
+    context.stroke();
+    for (const label of face.labels) {
+      const size = (label.size * canvas.width) / template.width;
+      context.save();
+      context.translate(label.center[0] * canvas.width, label.center[1] * canvas.height);
+      context.rotate((label.rotation * Math.PI) / 180);
+      context.fillStyle = '#ffffff';
+      context.font = `bold ${size * label.glyphScale * 1.25}px system-ui, sans-serif`;
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillText(label.label, 0, size * 0.03);
+      if (label.marker) context.fillRect(-size * 0.14, size * label.glyphScale * 0.66, size * 0.28, size * 0.035);
+      context.restore();
+    }
   }
-  return { source, layout };
+  return { source: canvas, layout: template.faces.map((face) => face.uv) };
 }

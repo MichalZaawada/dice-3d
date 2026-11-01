@@ -4,7 +4,8 @@ import { createDieController, type DieControllerConfig } from '../src/controller
 import type { DieEnvironment } from '../src/controller/environment.js';
 import { prepareSkin, type SourceInspector } from '../src/controller/skinValidation.js';
 import { assertD20Value, DEFAULT_THEME } from '../src/controller/validation.js';
-import { D20_VALUES, d20FaceFrame } from '../src/geometry/d20.js';
+import { d20FaceFrame } from '../src/geometry/d20.js';
+import { builtInDieModel } from '../src/geometry/dice.js';
 import { D20Error } from '../src/errors.js';
 import type { DieRenderer, PreparedSkin, ResolvedTheme } from '../src/renderer/renderer.js';
 import type { D20Value, MotionMode } from '../src/types.js';
@@ -123,8 +124,12 @@ export class FakeRenderer implements DieRenderer {
     return !this.disposed && !this.contextLost && this.width > 0 && this.height > 0;
   }
 
-  render(pose: Pose): void {
-    this.poses.push(pose);
+  /** All bodies of every rendered frame; `poses` keeps the first body for single-body assertions. */
+  readonly frames: (readonly Pose[])[] = [];
+
+  render(poses: readonly Pose[]): void {
+    this.frames.push(poses);
+    this.poses.push(poses[0]!);
   }
 
   isContextLost(): boolean {
@@ -181,13 +186,13 @@ export function createTestDie(
     theme: DEFAULT_THEME,
     renderer,
     environment,
-    orientationOf: (value) => d20FaceFrame(value).orientation,
+    orientationsOf: (value) => [d20FaceFrame(value).orientation],
     validateValue: (value) => {
       assertD20Value(value);
       return value;
     },
     prepareSkin: (skin) =>
-      prepareSkin(skin, { maxTextureSize: renderer.maxTextureSize, values: D20_VALUES, inspect: fakeInspector }),
+      prepareSkin(skin, { maxTextureSize: renderer.maxTextureSize, model: builtInDieModel('d20'), inspect: fakeInspector }),
     onTeardown: () => {
       teardowns.count++;
     },

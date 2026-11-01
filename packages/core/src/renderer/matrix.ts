@@ -16,23 +16,23 @@ export function perspective(fovYRadians: number, aspect: number, near: number, f
   return out;
 }
 
-/** Rigid transform: rotation by `q`, then translation by `t`. */
-export function fromRotationTranslation(q: Quat, t: Vec3): Mat4 {
+/** Uniform scale `s`, rotation by `q`, then translation by `t`. */
+export function fromRotationTranslation(q: Quat, t: Vec3, s = 1): Mat4 {
   const [x, y, z, w] = q;
   const x2 = x + x, y2 = y + y, z2 = z + z;
   const xx = x * x2, xy = x * y2, xz = x * z2;
   const yy = y * y2, yz = y * z2, zz = z * z2;
   const wx = w * x2, wy = w * y2, wz = w * z2;
   const out = new Float32Array(16);
-  out[0] = 1 - (yy + zz);
-  out[1] = xy + wz;
-  out[2] = xz - wy;
-  out[4] = xy - wz;
-  out[5] = 1 - (xx + zz);
-  out[6] = yz + wx;
-  out[8] = xz + wy;
-  out[9] = yz - wx;
-  out[10] = 1 - (xx + yy);
+  out[0] = (1 - (yy + zz)) * s;
+  out[1] = (xy + wz) * s;
+  out[2] = (xz - wy) * s;
+  out[4] = (xy - wz) * s;
+  out[5] = (1 - (xx + zz)) * s;
+  out[6] = (yz + wx) * s;
+  out[8] = (xz + wy) * s;
+  out[9] = (yz - wx) * s;
+  out[10] = (1 - (xx + yy)) * s;
   out[12] = t[0];
   out[13] = t[1];
   out[14] = t[2];

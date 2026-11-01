@@ -1,13 +1,14 @@
 {
   "name": "dice-3d",
   "version": "0.0.1",
-  "description": "Framework-agnostic 3D dice for the web (WebGL2). The first supported die is the D20.",
+  "description": "Framework-agnostic 3D dice for the web (WebGL2): D2–D120, percentile, Fate and custom dice.",
   "license": "MIT",
   "type": "module",
   "sideEffects": false,
   "keywords": [
     "dice",
     "d20",
+    "rpg",
     "webgl2",
     "3d",
     "animation"

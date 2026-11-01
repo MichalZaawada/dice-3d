@@ -28,7 +28,7 @@ try {
   const core = pack('dice-3d');
   const react = pack('dice-3d-react');
   for (const [info, required] of [
-    [core, ['package.json', 'README.md', 'LICENSE', 'CHANGELOG.md', 'dist/index.js', 'dist/index.d.ts', 'templates/d20-net-v1.svg', 'templates/d20-net-v1.json']],
+    [core, ['package.json', 'README.md', 'LICENSE', 'CHANGELOG.md', 'dist/index.js', 'dist/index.d.ts', 'templates/d20-net-v1.svg', 'templates/d20-net-v1.json', 'templates/d6-grid-v1.svg', 'templates/d100-grid-v1.json', 'templates/df-grid-v1.svg']],
     [react, ['package.json', 'README.md', 'LICENSE', 'CHANGELOG.md', 'dist/index.js', 'dist/index.d.ts']],
   ]) {
     const files = info.files.map((file) => file.path);
@@ -53,8 +53,25 @@ try {
   writeFileSync(
     join(consumer, 'src', 'usage.tsx'),
     `import { createD20, D20Error, D20_NET_V1, isD20Error, type AnimationResult, type D20, type D20Skin, type D20Value } from 'dice-3d';
-import { D20View, type D20ViewHandle } from 'dice-3d-react';
+import { createDie, defineDie, getDieInfo, type Die, type DieValueOf } from 'dice-3d';
+import { D20View, DieView, type D20ViewHandle, type DieViewHandle } from 'dice-3d-react';
 import { createRef } from 'react';
+
+export function mountAny(host: HTMLElement): Die<DieValueOf<'d100'>> {
+  const d100 = createDie(host, { type: 'd100', value: 100 });
+  const fate = createDie(host, { type: 'df', value: -1 });
+  void fate.rollTo(1);
+  // @ts-expect-error 7 is not a D6 result
+  createDie(host, { type: 'd6', value: 7 });
+  const custom = defineDie({ id: 'yes-no', shape: 'd2', faces: [{ value: 'yes', label: '+' }, { value: 'no', label: '-' }] });
+  const coin = createDie(host, { type: custom, value: 'yes' });
+  void coin.rollTo('no');
+  void getDieInfo('d12').values;
+  return d100;
+}
+
+export const dieHandle = createRef<DieViewHandle<'d8'>>();
+export const dieElement = <DieView ref={dieHandle} type="d8" value={8} />;
 
 export async function mount(host: HTMLElement, image: HTMLImageElement): Promise<AnimationResult | undefined> {
   let die: D20 | undefined;
@@ -124,6 +141,14 @@ try {
 const template = JSON.parse(readFileSync(fileURLToPath(import.meta.resolve('dice-3d/templates/d20-net-v1.json')), 'utf8'));
 if (JSON.stringify(template.faces['20']) !== JSON.stringify(core.D20_NET_V1.faces[20])) throw new Error('Template mismatch');
 readFileSync(fileURLToPath(import.meta.resolve('dice-3d/templates/d20-net-v1.svg')), 'utf8');
+const grid = JSON.parse(readFileSync(fileURLToPath(import.meta.resolve('dice-3d/templates/d6-grid-v1.json')), 'utf8'));
+if (JSON.stringify(grid.faces[0].uv) !== JSON.stringify(core.getDieTemplate('d6').faces[0].uv)) throw new Error('Grid template mismatch');
+try {
+  core.createDie({}, { type: 'd6' });
+  throw new Error('createDie must fail on the server');
+} catch (error) {
+  if (error.code !== 'WEBGL_UNAVAILABLE') throw error;
+}
 try {
   await import('dice-3d/dist/controller/createD20.js');
   throw new Error('Internal files must not be importable');

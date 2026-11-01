@@ -4,6 +4,7 @@ import { DEFAULT_THEME, mergeTheme, validateAnimationOptions, validateD20Options
 import { D20Error, isD20Error } from '../src/errors.js';
 import { D20_VALUES } from '../src/geometry/d20.js';
 import { D20_NET_V1 } from '../src/geometry/d20NetV1.js';
+import { builtInDieModel } from '../src/geometry/dice.js';
 import type { D20Value, FaceUV } from '../src/types.js';
 import { fakeInspector, fakeSource } from './helpers.js';
 
@@ -64,7 +65,7 @@ describe('option validation', () => {
 });
 
 describe('skin validation', () => {
-  const options = { maxTextureSize: 4096, values: D20_VALUES, inspect: fakeInspector };
+  const options = { maxTextureSize: 4096, model: builtInDieModel('d20'), inspect: fakeInspector };
 
   function customLayout(): Record<D20Value, FaceUV> {
     const layout = {} as Record<D20Value, FaceUV>;

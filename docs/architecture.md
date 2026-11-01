@@ -24,30 +24,56 @@ interface allows another backend without changing the public API.
 
 ## Module structure
 
-- `controller/createD20.ts` — public factory; refuses to run without `window`/`document`.
-- `controller/mountD20.ts` — DOM wiring: canvas (`aria-hidden`), `ResizeObserver`, DPR
-  `matchMedia` watch, `webglcontextlost`. Dependencies are injected so it can be tested in jsdom.
+- `controller/createD20.ts` — public factories `createD20` and `createDie`; refuse to run
+  without `window`/`document`; cache one mesh and label atlas per die type.
+- `controller/mountD20.ts` — `mountDie` (and the `mountD20` wrapper): canvas (`aria-hidden`,
+  `data-dice-3d="<type>"`), `ResizeObserver`, DPR `matchMedia` watch, `webglcontextlost`.
+  Dependencies are injected so it can be tested in jsdom.
 - `controller/dieController.ts` — die-independent state machine: snapshot, subscriptions,
   operations and Promise settlement, cancellation, motion modes, clock and frame scheduling.
+  It animates one pose per body (one track per body, shared duration).
+- `controller/dieInfo.ts` — `getDieInfo`, `getDieTemplate`, `createDieTemplateSvg`, `defineDie`.
+- `controller/skinValidation.ts` — skin validation for any type (template ids, UV polygons,
+  the D20 record layout).
 - `controller/environment.ts` — browser services (`requestAnimationFrame`, visibility,
   `prefers-reduced-motion`, `reportError`) behind an interface; tests use fakes with manual time.
-- `geometry/` — die definitions. `dieDefinition.ts` is shared; `d20.ts` and `d20NetV1.ts` are
-  D20-specific.
+- `geometry/shapes.ts` — polyhedra with circumradius 1: coin, prisms, tetrahedron, cube,
+  octahedron, trapezohedra, dodecahedron (dual of the icosahedron), icosahedron (the D20
+  table), kis and disdyakis subdivisions with canonical Catalan radii, rhombic triacontahedron.
+- `geometry/model.ts` — turns a shape and per-face results/labels into faces, mesh regions,
+  label placements and result poses.
+- `geometry/dice.ts` — the built-in registry, numbering, D100 pair, custom definitions.
+- `geometry/template.ts` — grid skin templates (and the D20 net template data) and the SVG.
+- `geometry/d20.ts`, `d20NetV1.ts` — the durable D20 numbering table and net.
 - `animation/` — quaternions, easing, `AnimationClock`, orient and roll tracks.
-- `renderer/` — WebGL2 renderer, shaders, camera, stroke glyphs, number atlas, mesh builder.
+- `renderer/` — WebGL2 renderer, shaders, camera, stroke glyphs, label atlas, mesh builder.
 
-### Preparing for other dice
+### How a die type is described
 
-The required preset list, compatibility rules and demo behavior are defined in
-[RPG dice support](dice-support.md). This is the implementation target; the
-architecture below describes the current D20 implementation.
+A `DieModel` holds one or more **bodies** (the D100 has two: tens and units). Each body has:
 
-Shared: controller, clock, tracks, renderer, skin upload and validation helpers, glyph atlas.
-Die-specific (`DieDefinition`): vertices, values, numbering and A/B/C vertex order per face;
-face frames and result orientations are derived from it. The "opposite faces sum to 21" rule
-is asserted only in D20 tests. A future `createD6` would add a definition, its own versioned net
-template (for example `d6-net-v1`) and a factory, leaving `createD20` and `d20-net-v1`
-untouched. Square faces would be triangulated while keeping one label frame per face.
+- **faces** in a global, documented order (skin layouts and templates use it; for built-in
+  numeric dice face i shows i + 1, so the canonical shape order follows the built-in numbering);
+- **regions**: convex polygons for the mesh, each with at most one label, per-edge flags saying
+  which edges are real die edges, and per-point corner weights for skin UVs. Single-label faces
+  are one region; D4 faces are split into three corner kites; coin rims and prism caps are
+  label-less trim regions without skin UVs;
+- **poses**: `(value, orientation)` pairs. Repeated outcomes have several poses; the controller
+  asks for the pose nearest to the current rotation, so the choice is deterministic.
+
+`orientations(value, current)` returns one rotation per body; `labelsFor`/`format` describe
+results; `isValue` validates before any state change. Adding a type means adding a shape and an
+entry in the registry — controller, renderer, skins and React need no change.
+
+### Labels
+
+Labels are text from the stroke font (digits, `+`, `−`) or user stroke symbols, rasterized into
+one signed-distance atlas per type. The glyph scale is uniform per die (three-digit labels
+shrink all labels of that die equally). Each label's cell size and position are the largest
+box of the widest label that fits its region (nested ternary search over a concave objective),
+at 86 % (corner labels 80 %), capped at 0.85 model units. The D20 keeps its original fixed
+0.5-unit label at the face centroid. A label is underlined when it reads as another label of
+the same die upside down (6/9; 16/91, 66/99 … on the D120); on the D20 this is exactly 6 and 9.
 
 ## Geometry and numbering
 
@@ -60,16 +86,27 @@ directions. Opposite faces sum to 21, and the five faces around every vertex sum
 
 Result orientation: the face normal points to the camera (+Z) and the label's up direction
 (centroid → A) points up (+Y). This is a presentation convention, not "the top face on a table".
+Other dice follow the same rule with their own label-up direction (D4: towards the result corner).
+
+Built-in numbering for other dice: faces are sorted by normal (top first, then azimuth) and
+opposite pairs get alternating low/high values summing to N + 1; even trapezohedra (D16) pair
+each kite with the kite half a turn away; prisms count around their axis; the D4 numbers its
+vertices. `tests/dice.test.ts` pins the rules for every type.
 
 ## Rendering
 
-- One interleaved static buffer: position, flat normal, barycentric coordinates, label
-  coordinates and atlas cell per vertex (60 vertices), plus a dynamic buffer of skin UVs.
+- One interleaved static buffer per type: position, normal (flat; smooth on the coin rim),
+  barycentric coordinates, label coordinates and atlas cell per vertex (D20: 60 vertices), plus
+  a dynamic buffer of skin UVs. Polygons are fanned; the barycentric component of an internal
+  diagonal is offset by 1, so only real edges are drawn. Multi-body dice draw each body's
+  vertex range with its own model matrix (offset and scale).
 - Numbers: a 640 × 512 single-channel signed-distance atlas, rasterized in JavaScript from the
   built-in stroke font (`renderer/glyphs.ts`) once per page and shared read-only. No font files,
   no canvas text, so the result is identical on every platform and no font license is involved.
   6 and 9 carry an underline.
-- Edges: computed from barycentric coordinates with `fwidth`, so their width is in device pixels.
+- Edges: computed from barycentric coordinates with `fwidth`, so their width is in device pixels
+  (scaled by √(20 / faces) above 20 faces so dense dice stay light).
+- Trim surfaces carry negative skin UVs and keep the body color when a skin is active.
 - Color: theme colors and the skin (uploaded as `SRGB8_ALPHA8`) are lit in linear space and
   encoded to sRGB in the shader. Transparent skin pixels show `bodyColor`.
 - Camera: fixed perspective camera on +Z; the shorter viewport side always shows ±1.42 model

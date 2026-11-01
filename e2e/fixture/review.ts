@@ -2,7 +2,7 @@
 // Browsers cap the number of live WebGL contexts (about 16 in Chromium), so face sheets are captured
 // from a single die per theme: each `setValue` renders synchronously, and drawing the WebGL canvas
 // in the same task copies that frame.
-import { createD20, D20_NET_V1, D20_VALUES, type D20, type D20Value } from 'dice-3d';
+import { createD20, createDie, D20_NET_V1, D20_VALUES, DIE_TYPES, getDieInfo, type D20, type D20Value } from 'dice-3d';
 
 function figure(sectionId: string, label: string, className = 'die'): HTMLElement {
   const item = document.createElement('figure');
@@ -82,6 +82,33 @@ for (const value of D20_VALUES) {
   }
 }
 for (const staged of [light, dark, skinned]) staged.die.dispose();
+
+// Every die type at its lowest, middle and highest result, one live context at a time.
+// WebKit counts disposed contexts until they are collected, so yield between types.
+for (const type of DIE_TYPES) {
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  const host = document.createElement('div');
+  host.className = 's160';
+  staging.append(host);
+  const die = createDie(host, { type, motion: 'none' });
+  const values = getDieInfo(type).values;
+  for (const value of [values[0]!, values[Math.floor(values.length / 2)]!, values[values.length - 1]!]) {
+    die.setValue(value);
+    const source = host.querySelector('canvas')!;
+    const target = document.createElement('canvas');
+    target.width = source.width;
+    target.height = source.height;
+    target.className = 'capture-type';
+    target.getContext('2d')!.drawImage(source, 0, 0);
+    const item = document.createElement('figure');
+    const caption = document.createElement('figcaption');
+    caption.textContent = `${die.info.name} ${die.info.format(value)}`;
+    item.append(target, caption);
+    document.getElementById('types')!.append(item);
+  }
+  die.dispose();
+  host.remove();
+}
 staging.remove();
 
 for (const [size, value] of [['die', 6], ['s160', 9], ['s320', 20]] as const) {

@@ -5,7 +5,7 @@ import { hexToLinear, parseHexColor } from './color.js';
 import { buildSkinUVs, MESH_LAYOUT, MESH_STRIDE, type DieMesh } from './dieMesh.js';
 import type { DieRenderer, PreparedSkin, ResolvedTheme } from './renderer.js';
 import { FRAGMENT_SHADER, VERTEX_SHADER } from './shaders.js';
-import { normalize } from '../animation/vector.js';
+import { normalize, type Vec3 } from '../animation/vector.js';
 
 const CONTEXT_ATTRIBUTES: WebGLContextAttributes = {
   alpha: true,
@@ -40,7 +40,7 @@ interface Uniforms {
  * numbers from a signed-distance atlas and edges from barycentric coordinates.
  * Throws `WEBGL_UNAVAILABLE` when a WebGL2 context or the shaders are unavailable.
  */
-export function createWebGL2Renderer<V extends number>(canvas: HTMLCanvasElement, mesh: DieMesh<V>): DieRenderer {
+export function createWebGL2Renderer(canvas: HTMLCanvasElement, mesh: DieMesh): DieRenderer {
   let gl: WebGL2RenderingContext | null;
   try {
     gl = canvas.getContext('webgl2', CONTEXT_ATTRIBUTES);
@@ -157,7 +157,7 @@ export function createWebGL2Renderer<V extends number>(canvas: HTMLCanvasElement
       }
       const texture = uploadSkinTexture(context, skin, anisotropy);
       context.bindBuffer(context.ARRAY_BUFFER, skinUVBuffer);
-      context.bufferSubData(context.ARRAY_BUFFER, 0, buildSkinUVs(skin.faces));
+      context.bufferSubData(context.ARRAY_BUFFER, 0, buildSkinUVs(mesh, skin.faces));
       context.bindBuffer(context.ARRAY_BUFFER, null);
       context.deleteTexture(skinTexture);
       skinTexture = texture;
@@ -175,7 +175,7 @@ export function createWebGL2Renderer<V extends number>(canvas: HTMLCanvasElement
 
     canRender,
 
-    render(pose) {
+    render(poses) {
       if (!canRender() || !theme) return;
       context.viewport(0, 0, width, height);
       context.clearColor(clear[0], clear[1], clear[2], clear[3]);
@@ -186,7 +186,6 @@ export function createWebGL2Renderer<V extends number>(canvas: HTMLCanvasElement
       context.clear(context.COLOR_BUFFER_BIT | context.DEPTH_BUFFER_BIT);
 
       context.useProgram(program);
-      context.uniformMatrix4fv(uniforms.model, false, fromRotationTranslation(pose.rotation, pose.offset));
       context.uniformMatrix4fv(uniforms.viewProjection, false, viewProjection(width / height));
       context.uniform3fv(uniforms.bodyColor, hexToLinear(theme.bodyColor));
       context.uniform3fv(uniforms.edgeColor, hexToLinear(theme.edgeColor));
@@ -194,7 +193,7 @@ export function createWebGL2Renderer<V extends number>(canvas: HTMLCanvasElement
       context.uniform3fv(uniforms.lightDirection, LIGHT_DIRECTION);
       context.uniform1f(uniforms.useSkin, skinTexture ? 1 : 0);
       context.uniform1f(uniforms.showNumbers, showNumbers ? 1 : 0);
-      context.uniform1f(uniforms.edgeWidth, Math.max(0.9, 0.0055 * Math.min(width, height)));
+      context.uniform1f(uniforms.edgeWidth, Math.max(0.9, 0.0055 * mesh.edgeScale * Math.min(width, height)));
       context.uniform2f(uniforms.atlasGrid, mesh.atlas.columns, mesh.atlas.rows);
 
       context.activeTexture(context.TEXTURE0);
@@ -205,7 +204,17 @@ export function createWebGL2Renderer<V extends number>(canvas: HTMLCanvasElement
       context.uniform1i(uniforms.numbers, 1);
 
       context.bindVertexArray(vertexArray);
-      context.drawArrays(context.TRIANGLES, 0, mesh.vertexCount);
+      mesh.bodies.forEach((body, index) => {
+        const pose = poses[index] ?? poses[0];
+        if (!pose) return;
+        const offset: Vec3 = [
+          body.offset[0] + pose.offset[0] * body.scale,
+          body.offset[1] + pose.offset[1] * body.scale,
+          body.offset[2] + pose.offset[2] * body.scale,
+        ];
+        context.uniformMatrix4fv(uniforms.model, false, fromRotationTranslation(pose.rotation, offset, body.scale));
+        context.drawArrays(context.TRIANGLES, body.first, body.count);
+      });
       context.bindVertexArray(null);
     },
 
