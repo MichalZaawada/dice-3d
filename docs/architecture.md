@@ -38,6 +38,10 @@ interface allows another backend without changing the public API.
 
 ### Preparing for other dice
 
+The required preset list, compatibility rules and demo behavior are defined in
+[RPG dice support](dice-support.md). This is the implementation target; the
+architecture below describes the current D20 implementation.
+
 Shared: controller, clock, tracks, renderer, skin upload and validation helpers, glyph atlas.
 Die-specific (`DieDefinition`): vertices, values, numbering and A/B/C vertex order per face;
 face frames and result orientations are derived from it. The "opposite faces sum to 21" rule

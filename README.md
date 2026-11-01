@@ -24,6 +24,7 @@ Examples: [`examples/vanilla`](examples/vanilla) (TypeScript, every core feature
 
 Documentation:
 
+- [RPG dice support: current status and implementation scope](docs/dice-support.md)
 - [Architecture and renderer choice](docs/architecture.md)
 - [Skins, templates and UV conventions](docs/skins.md)
 - [Testing and measurements](docs/testing.md)

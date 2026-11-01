@@ -10,6 +10,10 @@ twenty-sided die (D20); the package name and internals are prepared for more dic
 - No runtime dependencies, no fonts, no network access, about 11 kB gzip.
 - Safe to import during server-side rendering.
 
+Additional RPG dice (standard, percentile, Fate and extended/custom dice) are specified
+in the [implementation scope](../../docs/dice-support.md). These are planned; D20 is
+the only currently implemented type.
+
 React users: see [`dice-3d-react`](../react/README.md).
 
 ## Installation
