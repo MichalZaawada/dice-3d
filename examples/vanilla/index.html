@@ -8,8 +8,7 @@
 </head>
 <body class="dark">
 <main>
-  <header><a class="wordmark" href="#">dice<span>3d</span><span class="badge">PLAYGROUND</span></a><span class="version">D20 · WebGL2</span></header>
-  <div class="intro"><p class="eyebrow">A LITTLE CHANCE. A LOT OF POSSIBILITIES.</p><h1>Give it a spin.</h1><p>A real 3D die. Your textures. Your next project.</p></div>
+  <header><h1><a class="wordmark" href="#">dice-<span>3d</span></a></h1></header>
   <div class="workspace">
     <section class="preview" aria-label="Interactive die preview">
       <div class="stage-top"><span class="status"><i></i><span id="status">Ready</span></span><span>01 / D20</span></div>
@@ -35,7 +34,6 @@
       <fieldset><legend>03 &nbsp; Display</legend><div class="pair"><label>Die size<select id="size"><option value="96">96 px</option><option value="160" selected>160 px</option><option value="320">320 px</option></select></label><label class="toggle"><input type="checkbox" id="dark" checked /> Dark background</label></div></fieldset>
     </form>
   </div>
-  <footer><span>Independent by design. No framework required.</span><code>import { createD20 } from 'dice-3d'</code></footer>
 </main>
 <script type="module" src="./src/main.ts"></script>
 </body>
