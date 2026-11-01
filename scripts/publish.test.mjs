@@ -22,8 +22,9 @@ const args = process.argv.slice(2);
 appendFileSync(process.env.TEST_LOG, JSON.stringify({ args, cwd: process.cwd() }) + '\\n');
 if (args[0] === 'view') {
   const state = JSON.parse(process.env.TEST_REGISTRY)[args[1]] || 'E404';
-  console.log(JSON.stringify(state === 'published' ? '0.0.1' : { error: { code: state } }));
-  process.exit(state === 'published' ? 0 : 1);
+  const published = ['published', 'published-array'].includes(state);
+  console.log(JSON.stringify(published ? (state === 'published-array' ? ['0.0.1'] : '0.0.1') : { error: { code: state } }));
+  process.exit(published ? 0 : 1);
 }
 `, { mode: 0o755 });
     const result = spawnSync(process.execPath, ['scripts/publish.mjs', ...(check ? ['--check'] : [])], {
@@ -63,6 +64,11 @@ test('retry skips published core and publishes only adapter', () => {
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.writes.length, 1);
   assert.ok(result.writes[0].cwd.endsWith('/packages/react'));
+});
+test('npm 12 version arrays skip published packages on retry', () => {
+  const result = run({ registry: { 'dice-3d@0.0.1': 'published-array', 'dice-3d-react@0.0.1': 'published-array' } });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.writes.length, 0);
 });
 test('invalid tag, mode and credentials fail before registry access', () => {
   for (const options of [{ tag: 'v0.1.0' }, { mode: 'unknown' }, { mode: 'bootstrap' }, { token: 'unexpected' }, { mode: 'stage', token: 'unexpected' }]) {

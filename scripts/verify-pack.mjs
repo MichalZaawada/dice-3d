@@ -13,7 +13,10 @@ const work = mkdtempSync(join(tmpdir(), 'dice-3d-pack-verify-'));
 const run = (command, args, cwd) => execFileSync(command, args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 
 function pack(workspace) {
-  const [info] = JSON.parse(run('npm', ['pack', '--json', '--pack-destination', work, '-w', workspace], root));
+  const result = JSON.parse(run('npm', ['pack', '--json', '--pack-destination', work, '-w', workspace], root));
+  // npm <=11 returns an array; npm 12 keys results by package name.
+  const info = Array.isArray(result) ? result[0] : result[workspace];
+  assert(info?.name === workspace && typeof info.filename === 'string', `unexpected npm pack output for ${workspace}`);
   return info;
 }
 

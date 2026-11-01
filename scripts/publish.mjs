@@ -32,7 +32,10 @@ if (!process.argv.includes('--check')) {
     const result = spawnSync('npm', ['view', `${pkg.name}@${version}`, 'version', '--json', '--registry=https://registry.npmjs.org'], { encoding: 'utf8' });
     if (result.error) throw result.error;
     if (result.status === 0) {
-      if (JSON.parse(result.stdout) !== version) throw new Error(`Unexpected registry version for ${pkg.name}`);
+      const response = JSON.parse(result.stdout);
+      // npm 12 wraps even a single version in an array.
+      const published = Array.isArray(response) && response.length === 1 ? response[0] : response;
+      if (published !== version) throw new Error(`Unexpected registry version for ${pkg.name}`);
       console.log(`${pkg.name}@${version} already published; skipping immutable version.`);
       return false;
     }

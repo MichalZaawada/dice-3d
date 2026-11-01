@@ -16,6 +16,8 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - name: Use the same npm version as publishing
+        run: npm install --global npm@12.2.1
       - run: npm ci
       - run: npm run check
       - run: npx playwright install --with-deps chromium firefox webkit
