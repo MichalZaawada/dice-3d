@@ -154,14 +154,16 @@ function updateTemplateLinks(type: DieType): void {
 }
 
 let activeSkin: DieSkin | null = null;
-function applySkin(skin: DieSkin | null): void {
+function applySkin(skin: DieSkin | null): boolean {
   try {
     die?.setSkin(skin);
     activeSkin = skin;
     errorBox.hidden = true;
+    return true;
   } catch (error) {
     // A failed swap keeps the previous appearance.
     showError(error);
+    return false;
   }
 }
 
@@ -200,6 +202,7 @@ function switchType(type: DieType): void {
   // An uploaded image was painted for the previous template: drop it.
   uploadInput.value = '';
   uploadVersion++;
+  if (skinSelect.value === 'upload') skinSelect.value = 'default';
   updateTemplateLinks(type);
   errorBox.hidden = true;
   try {
@@ -267,7 +270,11 @@ $('#set-value').addEventListener('click', () => {
 
 motionSelect.addEventListener('change', () => die?.setMotion(motionSelect.value as MotionMode));
 themeSelect.addEventListener('change', () => die?.setTheme(themes[themeSelect.value] ?? {}));
-skinSelect.addEventListener('change', () => applySkin(selectedSkin()));
+skinSelect.addEventListener('change', () => {
+  // A newer surface choice takes precedence over an image still being decoded.
+  uploadVersion++;
+  if (applySkin(selectedSkin())) uploadInput.value = '';
+});
 
 let uploadVersion = 0;
 uploadInput.addEventListener('change', async () => {
@@ -285,7 +292,9 @@ uploadInput.addEventListener('change', async () => {
     const context = source.getContext('2d');
     if (!context) throw new Error('Unable to decode the texture');
     context.drawImage(bitmap, 0, 0);
-    applySkin({ source, layout: info.templateId, numbers: numbersSelect.value as 'overlay' | 'in-texture' });
+    if (applySkin({ source, layout: info.templateId, numbers: numbersSelect.value as 'overlay' | 'in-texture' })) {
+      skinSelect.value = 'upload';
+    }
   } catch (error) { if (version === uploadVersion) showError(error); }
   finally { bitmap?.close(); }
 });

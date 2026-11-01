@@ -25,6 +25,69 @@ test('vanilla example renders, rolls and swaps skins', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+async function uploadTexture(page: Page): Promise<void> {
+  const data = await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 256;
+    const context = canvas.getContext('2d')!;
+    context.fillStyle = '#ff00ff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/png').split(',')[1]!;
+  });
+  await page.locator('#upload').setInputFiles({
+    name: 'texture.png', mimeType: 'image/png', buffer: Buffer.from(data, 'base64'),
+  });
+}
+
+test('built-in surfaces replace an uploaded texture, including the previous selection', async ({ page }) => {
+  await page.goto('/examples/vanilla/index.html');
+  const canvas = page.locator('#dice canvas');
+  for (const surface of ['default', 'net', 'custom']) {
+    await page.selectOption('#skin', surface);
+    const original = await canvas.screenshot();
+    await uploadTexture(page);
+    await expect(page.locator('#skin')).toHaveValue('upload');
+    expect(await canvas.screenshot()).not.toEqual(original);
+    await page.selectOption('#skin', surface);
+    await expect(page.locator('#upload')).toHaveValue('');
+    expect(await canvas.screenshot()).toEqual(original);
+    await expect(page.locator('#error')).toBeHidden();
+  }
+  await uploadTexture(page);
+  await expect(page.locator('#skin')).toHaveValue('upload');
+  await page.selectOption('#die-type', 'd6');
+  await expect(page.locator('#skin')).toHaveValue('default');
+  await expect(page.locator('#upload')).toHaveValue('');
+});
+
+test('a pending texture upload cannot overwrite a newer surface choice', async ({ page }) => {
+  await page.goto('/examples/vanilla/index.html');
+  const original = await page.locator('#dice canvas').screenshot();
+  await page.evaluate(() => {
+    const decode = window.createImageBitmap.bind(window);
+    window.createImageBitmap = (async (source: ImageBitmapSource) => {
+      const bitmap = await decode(source);
+      await new Promise<void>((resolve) => {
+        Object.assign(window, { finishTextureDecode: resolve });
+      });
+      return bitmap;
+    }) as typeof createImageBitmap;
+  });
+  await uploadTexture(page);
+  await page.waitForFunction(() => 'finishTextureDecode' in window);
+  await page.selectOption('#skin', 'net');
+  await page.selectOption('#skin', 'default');
+  await page.evaluate(async () => {
+    (window as unknown as { finishTextureDecode: () => void }).finishTextureDecode();
+    // Allow the upload continuation to run before checking its final state.
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  });
+  await expect(page.locator('#skin')).toHaveValue('default');
+  await expect(page.locator('#upload')).toHaveValue('');
+  expect(await page.locator('#dice canvas').screenshot()).toEqual(original);
+});
+
 test('vanilla reload resets restored controls along with the die', async ({ page }) => {
   const errors = collectErrors(page);
   await page.goto('/examples/vanilla/index.html');
