@@ -1,4 +1,4 @@
-import { getDieTemplate, type DieTemplate, type DieType, type FaceUVPolygon } from '@ticonemarsicano/dice-3d';
+import { getDieTemplate, type DieTemplate, type DieType, type FaceUVPolygon } from '@ticone_marsicano/dice-3d';
 
 function canvasFor(template: DieTemplate, width: number): { canvas: HTMLCanvasElement; context: CanvasRenderingContext2D } {
   const canvas = document.createElement('canvas');

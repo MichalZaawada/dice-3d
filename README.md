@@ -16,8 +16,8 @@ dependency on any host application and can be moved to its own repository as-is.
 
 | Package | Path | Purpose |
 | --- | --- | --- |
-| `@ticonemarsicano/dice-3d` | [`packages/core`](packages/core/README.md) | Framework-agnostic WebGL2 dice: D2–D120, percentile, Fate and custom dice. |
-| `@ticonemarsicano/dice-3d-react` | [`packages/react`](packages/react/README.md) | Optional `<DieView>` and `<D20View>` adapters. |
+| `@ticone_marsicano/dice-3d` | [`packages/core`](packages/core/README.md) | Framework-agnostic WebGL2 dice: D2–D120, percentile, Fate and custom dice. |
+| `@ticone_marsicano/dice-3d-react` | [`packages/react`](packages/react/README.md) | Optional `<DieView>` and `<D20View>` adapters. |
 
 Examples: [`examples/vanilla`](examples/vanilla) (TypeScript, every core feature) and
 [`examples/react`](examples/react).
@@ -41,7 +41,7 @@ Run from this directory after `npm install`:
 
 | Script | What it does |
 | --- | --- |
-| `npm run build:packages` | Builds `@ticonemarsicano/dice-3d` and `@ticonemarsicano/dice-3d-react` (ESM + `.d.ts`). |
+| `npm run build:packages` | Builds `@ticone_marsicano/dice-3d` and `@ticone_marsicano/dice-3d-react` (ESM + `.d.ts`). |
 | `npm run build` | Packages, then the examples. |
 | `npm run typecheck` | Type-checks packages, examples, tests and tooling. |
 | `npm run lint` | ESLint (the core may not import any package). |

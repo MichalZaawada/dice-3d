@@ -2,16 +2,16 @@
 
 See [deployment pipelines](deployment.md) for GitHub Pages, npm authentication and tag-based releases.
 
-Before the first npm release of `@ticonemarsicano/dice-3d` and `@ticonemarsicano/dice-3d-react`:
+Before the first npm release of `@ticone_marsicano/dice-3d` and `@ticone_marsicano/dice-3d-react`:
 
 1. **License.** The packages currently carry the MIT license as a placeholder chosen during
    implementation; the owner must confirm it (or replace `LICENSE` and the `license` fields).
    No font is embedded (numbers use the library's own stroke glyphs), so no font license applies.
-2. **Package names.** Packages are published under the `@ticonemarsicano` scope. The unscoped
+2. **Package names.** Packages are published under the `@ticone_marsicano` scope. The unscoped
    name `dice-3d` was rejected by npm on 2026-11-01 because it differs from the existing
    `dice3d` only by punctuation (staging reported a generic `E400 Version uniqueness check
    failed unexpectedly`). Scoped names skip that similarity check; the npm account or
-   organization `ticonemarsicano` must own the scope.
+   organization `ticone_marsicano` must own the scope.
 3. **Repository metadata.** Verify the `repository`, `homepage` and `bugs` fields point to
    `MichalZaawada/dice-3d`.
 4. Run `npm run check` and `npm run test:e2e` (Chromium, Firefox, WebKit).

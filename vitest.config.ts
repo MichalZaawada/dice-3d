@@ -25,7 +25,7 @@ export default defineConfig({
         },
       },
       {
-        resolve: { alias: { '@ticonemarsicano/dice-3d': coreSource } },
+        resolve: { alias: { '@ticone_marsicano/dice-3d': coreSource } },
         test: {
           name: 'react',
           root: './packages/react',
@@ -35,7 +35,7 @@ export default defineConfig({
         },
       },
       {
-        resolve: { alias: { '@ticonemarsicano/dice-3d': coreSource } },
+        resolve: { alias: { '@ticone_marsicano/dice-3d': coreSource } },
         test: {
           name: 'react-ssr',
           root: './packages/react',

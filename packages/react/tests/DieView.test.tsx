@@ -1,8 +1,8 @@
 import { act, cleanup, render } from '@testing-library/react';
 import { createRef, StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Die, DieAnimationResult, DieOptions, DieSnapshot, DieValue } from '@ticonemarsicano/dice-3d';
-import { D20Error, defineDie } from '@ticonemarsicano/dice-3d';
+import type { Die, DieAnimationResult, DieOptions, DieSnapshot, DieValue } from '@ticone_marsicano/dice-3d';
+import { D20Error, defineDie } from '@ticone_marsicano/dice-3d';
 import { DieView, type DieViewHandle } from '../src/index.js';
 
 interface FakeDie extends Die {
@@ -15,8 +15,8 @@ interface FakeDie extends Die {
 const created: FakeDie[] = [];
 let createError: unknown = null;
 
-vi.mock('@ticonemarsicano/dice-3d', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@ticonemarsicano/dice-3d')>();
+vi.mock('@ticone_marsicano/dice-3d', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@ticone_marsicano/dice-3d')>();
   return {
     ...actual,
     createDie: vi.fn((container: HTMLElement, options: DieOptions) => {

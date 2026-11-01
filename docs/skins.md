@@ -29,7 +29,7 @@ The renderer adapts this to WebGL's texture conventions internally.
 
 ## The official template: `d20-net-v1`
 
-Published files (package subpath `@ticonemarsicano/dice-3d/templates/*`):
+Published files (package subpath `@ticone_marsicano/dice-3d/templates/*`):
 
 - `d20-net-v1.svg` — 2048 × 1024 editing template with three layers:
   - `artwork` (bottom): paint here; it starts with a full-size background rectangle.
@@ -125,7 +125,7 @@ image — and centered in its own cell, in face index order, row by row. Built-i
 order faces by value (cell 0 is the face showing 1); DF faces are `+ + blank blank − −`; the
 D100 lists the ten tens faces, then the ten units faces; D4 faces carry three corner labels.
 
-- Files: `@ticonemarsicano/dice-3d/templates/<type>-grid-v1.svg` (layers `artwork`, `numbers`, `guides`, like the
+- Files: `@ticone_marsicano/dice-3d/templates/<type>-grid-v1.svg` (layers `artwork`, `numbers`, `guides`, like the
   D20 net) and `.json` (`width`, `height`, `aspectRatio`, and per face `index`, `value`,
   `label`, `uv` and label positions). Reference width 2048 px; the aspect ratio must match
   within 1 %.

@@ -14,8 +14,8 @@
     "examples/react"
   ],
   "scripts": {
-    "build": "npm run build -w @ticonemarsicano/dice-3d && npm run build -w @ticonemarsicano/dice-3d-react && npm run build:examples",
-    "build:packages": "npm run build -w @ticonemarsicano/dice-3d && npm run build -w @ticonemarsicano/dice-3d-react",
+    "build": "npm run build -w @ticone_marsicano/dice-3d && npm run build -w @ticone_marsicano/dice-3d-react && npm run build:examples",
+    "build:packages": "npm run build -w @ticone_marsicano/dice-3d && npm run build -w @ticone_marsicano/dice-3d-react",
     "build:examples": "npm run build -w dice-3d-example-vanilla && npm run build -w dice-3d-example-react",
     "typecheck": "npm run typecheck --workspaces --if-present && tsc -p tsconfig.tools.json",
     "lint": "eslint .",

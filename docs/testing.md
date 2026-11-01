@@ -48,12 +48,12 @@ Playwright 1.64.1 with headless Chromium 156, Firefox 157 and WebKit 27.2. This 
 - Unit tests: 387 passed (13 files).
 - Browser tests: 135 passed (45 tests × 3 engines).
 - `npm run check`: passed (lint, typecheck, build, unit tests, examples, size, pack:verify).
-- Size (`npm run size`): `@ticonemarsicano/dice-3d` 54.7 kB minified / **21.0 kB gzip** (budget 200 kB gzip,
+- Size (`npm run size`): `@ticone_marsicano/dice-3d` 54.7 kB minified / **21.0 kB gzip** (budget 200 kB gzip,
   unchanged; the D20-only release was 11.3 kB). The growth is the shape builders, model,
   label fitting and template code; atlases and meshes are built lazily per type at runtime.
-  `@ticonemarsicano/dice-3d-react` 1.1 kB gzip without React and core.
-- Tarballs (`npm run pack:verify`): `@ticonemarsicano/dice-3d` 108 files (now including 19 grid templates),
-  128.7 kB packed / 787.6 kB unpacked; `@ticonemarsicano/dice-3d-react` 12 files, 5.8 kB / 17.3 kB.
+  `@ticone_marsicano/dice-3d-react` 1.1 kB gzip without React and core.
+- Tarballs (`npm run pack:verify`): `@ticone_marsicano/dice-3d` 108 files (now including 19 grid templates),
+  128.7 kB packed / 787.6 kB unpacked; `@ticone_marsicano/dice-3d-react` 12 files, 5.8 kB / 17.3 kB.
 - Frame timing (`e2e/performance.e2e.ts`, D20 at 160 × 160 CSS px, DPR 2, five consecutive rolls):
 
   | Engine | Frames | p95 frame interval | p95 time in animation callbacks |

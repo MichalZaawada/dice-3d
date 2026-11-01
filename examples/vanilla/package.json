@@ -10,6 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ticonemarsicano/dice-3d": "*"
+    "@ticone_marsicano/dice-3d": "*"
   }
 }

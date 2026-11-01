@@ -24,7 +24,7 @@ async function measure(entry, external = []) {
 
 const kb = (bytes) => `${(bytes / 1024).toFixed(1)} kB`;
 const core = await measure('packages/core/dist/index.js');
-const react = await measure('packages/react/dist/index.js', ['react', 'react/jsx-runtime', '@ticonemarsicano/dice-3d']);
+const react = await measure('packages/react/dist/index.js', ['react', 'react/jsx-runtime', '@ticone_marsicano/dice-3d']);
 console.log(`dice-3d        ${kb(core.minified)} minified, ${kb(core.gzip)} gzip (budget ${kb(CORE_BUDGET_BYTES)} gzip)`);
 console.log(`dice-3d-react  ${kb(react.minified)} minified, ${kb(react.gzip)} gzip (excluding react and dice-3d)`);
 if (core.gzip > CORE_BUDGET_BYTES) {

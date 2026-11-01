@@ -10,8 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ticonemarsicano/dice-3d": "*",
-    "@ticonemarsicano/dice-3d-react": "*",
+    "@ticone_marsicano/dice-3d": "*",
+    "@ticone_marsicano/dice-3d-react": "*",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   }
