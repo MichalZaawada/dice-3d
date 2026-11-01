@@ -18,6 +18,7 @@ Documentation:
 - [Skins, templates and UV conventions](docs/skins.md)
 - [Testing and measurements](docs/testing.md)
 - [Release checklist](docs/releasing.md)
+- [GitHub Pages and npm pipelines](docs/deployment.md)
 
 ## Requirements
 

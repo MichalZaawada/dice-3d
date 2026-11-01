@@ -5,7 +5,13 @@
   "license": "MIT",
   "type": "module",
   "sideEffects": false,
-  "keywords": ["dice", "d20", "react", "webgl2", "3d"],
+  "keywords": [
+    "dice",
+    "d20",
+    "react",
+    "webgl2",
+    "3d"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -30,5 +36,18 @@
   "scripts": {
     "build": "node ../../scripts/clean.mjs dist && tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MichalZaawada/dice-3d.git",
+    "directory": "packages/react"
+  },
+  "homepage": "https://github.com/MichalZaawada/dice-3d#readme",
+  "bugs": {
+    "url": "https://github.com/MichalZaawada/dice-3d/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }
