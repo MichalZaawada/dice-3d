@@ -1,9 +1,10 @@
 import { invalidArgument } from '../errors.js';
 import { isD20Value } from '../geometry/d20.js';
+import { builtInDieModel, type DieModel } from '../geometry/dice.js';
 import { MOTION_MODES } from '../animation/motion.js';
 import { isHexColor } from '../renderer/color.js';
 import type { ResolvedTheme } from '../renderer/renderer.js';
-import type { AnimationOptions, D20Options, D20Theme, D20Value, MotionMode } from '../types.js';
+import type { AnimationOptions, D20Options, D20Theme, D20Value, DieValue, MotionMode } from '../types.js';
 
 /** Default appearance: ivory body, dark edges and numbers, transparent background. */
 export const D20_DEFAULT_THEME: Readonly<D20Theme> = Object.freeze({
@@ -84,20 +85,35 @@ export function mergeTheme(base: ResolvedTheme, theme: unknown): ResolvedTheme {
   return Object.freeze(next) as unknown as ResolvedTheme;
 }
 
-export interface ValidatedOptions {
-  readonly value: D20Value;
+export interface ValidatedOptions<V = D20Value> {
+  readonly value: V;
   readonly theme: ResolvedTheme;
   readonly motion: MotionMode;
   readonly maxPixelRatio: number;
   readonly skin: unknown;
 }
 
+/** Throws `INVALID_ARGUMENT` unless `value` is a result of the die. */
+export function assertDieValue(model: DieModel, value: unknown, name = 'value'): asserts value is DieValue {
+  if (!model.isValue(value)) throw invalidArgument(`${name} must be ${model.expected}, received ${describe(value)}`);
+}
+
 /** Validates everything except the skin (which needs a live context for its size limit). */
 export function validateD20Options(options: unknown): ValidatedOptions {
+  return validateDieOptions(options, builtInDieModel('d20')) as ValidatedOptions;
+}
+
+export function validateDieOptions(options: unknown, model: DieModel): ValidatedOptions<DieValue> {
   if (options === undefined) options = {};
   if (!isPlainObject(options)) throw invalidArgument('options must be an object');
-  const { value = 20, theme, motion = 'system', maxPixelRatio = DEFAULT_MAX_PIXEL_RATIO, skin } = options as D20Options;
-  assertD20Value(value, 'options.value');
+  const {
+    value = model.defaultValue,
+    theme,
+    motion = 'system',
+    maxPixelRatio = DEFAULT_MAX_PIXEL_RATIO,
+    skin,
+  } = options as Omit<D20Options, 'value'> & { value?: unknown };
+  assertDieValue(model, value, 'options.value');
   assertMotionMode(motion);
   if (typeof maxPixelRatio !== 'number' || !Number.isFinite(maxPixelRatio) || maxPixelRatio < 1) {
     throw invalidArgument(`maxPixelRatio must be a finite number >= 1, received ${describe(maxPixelRatio)}`);

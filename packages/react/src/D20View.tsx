@@ -1,24 +1,15 @@
-import {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  type CSSProperties,
-  type ForwardedRef,
-} from 'react';
+import { forwardRef, useRef, type CSSProperties, type ForwardedRef } from 'react';
 import {
   createD20,
-  D20_DEFAULT_THEME,
-  D20Error,
   type AnimationOptions,
   type AnimationResult,
-  type D20,
   type D20Skin,
   type D20Snapshot,
   type D20Theme,
   type D20Value,
   type MotionMode,
 } from 'dice-3d';
+import { useDieView, type DieLike, type DieViewHandleBase } from './useDieView.js';
 
 export interface D20ViewProps {
   /** Displayed value. Changes animate with `orientTo`. */
@@ -50,134 +41,13 @@ export interface D20ViewHandle {
   getSnapshot(): Readonly<D20Snapshot> | null;
 }
 
-interface Applied {
-  value: D20Value;
-  motion: MotionMode;
-  themeKey: string;
-  skin: D20Skin | null;
-}
-
-const NO_DIE: AnimationResult = Object.freeze({ status: 'cancelled', reason: 'disposed' });
-
-function resolveTheme(theme: Partial<D20Theme> | undefined): D20Theme {
-  return { ...D20_DEFAULT_THEME, ...theme };
-}
-
-function themeKey(theme: D20Theme): string {
-  return [theme.bodyColor, theme.edgeColor, theme.numberColor, theme.background].join('|');
-}
-
-type ErrorHandlerRef = { readonly current: ((error: unknown) => void) | undefined };
-
-function reportTo(handler: ErrorHandlerRef, error: unknown): void {
-  if (handler.current) handler.current(error);
-  else console.error(error);
-}
+const createD20Die = (host: HTMLDivElement, options: Parameters<typeof createD20>[1]) =>
+  createD20(host, options) as unknown as DieLike<D20Value, D20Skin>;
 
 function D20ViewImpl(props: D20ViewProps, ref: ForwardedRef<D20ViewHandle>) {
-  const { value, motion = 'system', theme, skin = null, maxPixelRatio, className, style } = props;
   const hostRef = useRef<HTMLDivElement>(null);
-  const dieRef = useRef<D20 | null>(null);
-  const appliedRef = useRef<Applied | null>(null);
-  const propsRef = useRef(props);
-  const onErrorRef = useRef(props.onError);
-
-  useEffect(() => {
-    propsRef.current = props;
-    onErrorRef.current = props.onError;
-  });
-
-  // Create the die after mount and dispose it on unmount (Strict Mode safe: each run owns its instance).
-  useEffect(() => {
-    const host = hostRef.current;
-    if (!host) return;
-    const initial = propsRef.current;
-    const initialTheme = resolveTheme(initial.theme);
-    const initialMotion = initial.motion ?? 'system';
-    const initialSkin = initial.skin ?? null;
-    let die: D20;
-    try {
-      die = createD20(host, {
-        value: initial.value,
-        motion: initialMotion,
-        theme: initialTheme,
-        ...(initialSkin ? { skin: initialSkin } : {}),
-        ...(maxPixelRatio !== undefined ? { maxPixelRatio } : {}),
-      });
-    } catch (error) {
-      reportTo(onErrorRef, error);
-      return;
-    }
-    dieRef.current = die;
-    appliedRef.current = { value: initial.value, motion: initialMotion, themeKey: themeKey(initialTheme), skin: initialSkin };
-    let ownDisposal = false;
-    const unsubscribe = die.subscribe((snapshot) => {
-      if (snapshot.state !== 'disposed' || ownDisposal) return;
-      dieRef.current = null;
-      appliedRef.current = null;
-      reportTo(onErrorRef, new D20Error('CONTEXT_LOST', 'The die was disposed after its WebGL context was lost'));
-    });
-    return () => {
-      ownDisposal = true;
-      unsubscribe();
-      die.dispose();
-      if (dieRef.current === die) {
-        dieRef.current = null;
-        appliedRef.current = null;
-      }
-    };
-  }, [maxPixelRatio]);
-
-  // Push prop changes to the die; the core validates them.
-  useEffect(() => {
-    const die = dieRef.current;
-    const applied = appliedRef.current;
-    if (!die || !applied) return;
-    const report = (error: unknown) => reportTo(onErrorRef, error);
-    const run = (action: () => void) => {
-      try {
-        action();
-      } catch (error) {
-        report(error);
-      }
-    };
-    if (motion !== applied.motion) {
-      applied.motion = motion;
-      run(() => die.setMotion(motion));
-    }
-    const nextTheme = resolveTheme(theme);
-    const nextThemeKey = themeKey(nextTheme);
-    if (nextThemeKey !== applied.themeKey) {
-      applied.themeKey = nextThemeKey;
-      run(() => die.setTheme(nextTheme));
-    }
-    if (skin !== applied.skin) {
-      applied.skin = skin;
-      run(() => die.setSkin(skin));
-    }
-    if (value !== applied.value) {
-      applied.value = value;
-      const snapshot = die.getSnapshot();
-      const alreadyThere = snapshot.target === value || (snapshot.state === 'idle' && snapshot.value === value);
-      if (!alreadyThere) {
-        run(() => {
-          die.orientTo(value).catch(report);
-        });
-      }
-    }
-  });
-
-  useImperativeHandle(
-    ref,
-    () => ({
-      rollTo: (next, options) => dieRef.current?.rollTo(next, options) ?? Promise.resolve(NO_DIE),
-      orientTo: (next, options) => dieRef.current?.orientTo(next, options) ?? Promise.resolve(NO_DIE),
-      getSnapshot: () => dieRef.current?.getSnapshot() ?? null,
-    }),
-    [],
-  );
-
-  return <div ref={hostRef} className={className} style={style} data-dice-3d-view="" />;
+  useDieView<D20Value, D20Skin, D20ViewProps>(props, ref as ForwardedRef<DieViewHandleBase<D20Value>>, hostRef, createD20Die, 'd20');
+  return <div ref={hostRef} className={props.className} style={props.style} data-dice-3d-view="" />;
 }
 
 /**

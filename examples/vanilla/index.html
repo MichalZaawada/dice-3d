@@ -11,27 +11,32 @@
   <header><h1><a class="wordmark" href="#">dice-<span>3d</span></a></h1></header>
   <div class="workspace">
     <section class="preview" aria-label="Interactive die preview">
-      <div class="stage-top"><span class="status"><i></i><span id="status">Ready</span></span><span>01 / D20</span></div>
+      <div class="stage-top"><span class="status"><i></i><span id="status">Ready</span></span><span id="die-name">D20</span></div>
       <div class="stage" id="stage"><div class="halo"></div><div id="dice" class="dice size-160"></div></div>
-      <div class="result"><span>LAST RESULT</span><output id="result" aria-live="polite">20</output></div>
+      <div class="result"><span>LAST RESULT</span><output id="result" aria-live="polite">20</output><span id="result-detail" class="result-detail" hidden></span></div>
       <p id="error" class="error" role="alert" hidden></p>
       <div class="roll-actions"><button type="button" id="roll" class="primary">↻ &nbsp; Roll the dice</button><button type="button" id="roll-target">Roll to selected value</button></div>
       <div class="history"><span>RECENT ROLLS</span><ol id="history" aria-label="Recent completed rolls"><li class="empty">Your story starts with a roll.</li></ol></div>
     </section>
     <form id="controls" class="controls" autocomplete="off">
       <div class="panel-heading"><h2>Make it yours</h2><span>LIVE CONTROLS</span></div>
-      <fieldset><legend>01 &nbsp; Appearance</legend>
+      <fieldset><legend>01 &nbsp; Die</legend>
+        <label>Die type<select id="die-type"></select></label>
+        <p id="die-shape" class="hint"></p>
+        <p id="percentile-note" class="hint" hidden></p>
+      </fieldset>
+      <fieldset><legend>02 &nbsp; Appearance</legend>
         <label>Material<select id="theme"><option value="ivory">Ivory</option><option value="obsidian">Obsidian</option><option value="jade" selected>Jade</option></select></label>
         <label>Surface<select id="skin"><option value="default">Solid color</option><option value="net">Template artwork (overlay)</option><option value="custom">Custom UV atlas (baked numbers)</option></select></label>
-        <label class="upload">Upload your own texture<input type="file" id="upload" accept="image/png,image/jpeg,image/webp" /><small>PNG, JPG or WebP · use the net template below</small></label>
+        <label class="upload">Upload your own texture<input type="file" id="upload" accept="image/png,image/jpeg,image/webp" /><small>PNG, JPG or WebP · use the template below</small></label>
         <label>Texture numbers<select id="numbers"><option value="in-texture">Already in the image</option><option value="overlay">Add library numbers</option></select></label>
-        <p class="hint">Start with the net: <a id="template-svg" download>SVG template ↗</a> <a id="template-json" download>UV mapping ↗</a></p>
+        <p class="hint">Start with the template: <a id="template-svg" download>SVG template ↗</a> <a id="template-json" download>UV mapping ↗</a></p>
       </fieldset>
-      <fieldset><legend>02 &nbsp; Movement</legend>
-        <div class="pair"><label>Target face<select id="value"></select></label><label>Motion<select id="motion"><option value="system">System preference</option><option value="full">Full animation</option><option value="reduced">Reduced motion</option><option value="none">No animation</option></select></label></div>
+      <fieldset><legend>03 &nbsp; Movement</legend>
+        <div class="pair"><label>Result<select id="value"></select></label><label>Motion<select id="motion"><option value="system">System preference</option><option value="full">Full animation</option><option value="reduced">Reduced motion</option><option value="none">No animation</option></select></label></div>
         <button type="button" id="set-value" class="wide">Set selected value instantly</button>
       </fieldset>
-      <fieldset><legend>03 &nbsp; Display</legend><div class="pair"><label>Die size<select id="size"><option value="96">96 px</option><option value="160" selected>160 px</option><option value="320">320 px</option></select></label><label class="toggle"><input type="checkbox" id="dark" checked /> Dark background</label></div></fieldset>
+      <fieldset><legend>04 &nbsp; Display</legend><div class="pair"><label>Die size<select id="size"><option value="96">96 px</option><option value="160" selected>160 px</option><option value="320">320 px</option></select></label><label class="toggle"><input type="checkbox" id="dark" checked /> Dark background</label></div></fieldset>
     </form>
   </div>
 </main>

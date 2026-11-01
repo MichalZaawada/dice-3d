@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="2048" height="1365" viewBox="0 0 2048 1365">
+  <title>dice-3d Fudge/Fate DF skin template (df-grid-v1)</title>
+  <desc>
+    Paint on the "artwork" layer and export the whole page as PNG with the same aspect ratio
+    (2048 x 1365 recommended). Hide the "guides" layer before exporting. Keep the "numbers"
+    layer for numbers: 'in-texture', or hide it for numbers: 'overlay'. Every face is upright in its
+    own cell; extend artwork slightly beyond the outlines to avoid seams. The dot marks the top of
+    each label. Cell positions and the aspect ratio must not change.
+  </desc>
+  <g id="artwork" inkscape:groupmode="layer" inkscape:label="artwork">
+    <rect id="artwork-background" x="0" y="0" width="2048" height="1365" fill="#f2ede4"/>
+  </g>
+  <g id="numbers" inkscape:groupmode="layer" inkscape:label="numbers" fill="none" stroke="#1d1b18" stroke-width="32.49" stroke-linecap="round" stroke-linejoin="round">
+    <path id="number-0-0" transform="translate(341.33 341.33) rotate(0)" d="M-60.65 0 L60.65 0 M0 -60.65 L0 60.65"/>
+    <path id="number-1-0" transform="translate(1024 341.33) rotate(0)" d="M-60.65 0 L60.65 0 M0 -60.65 L0 60.65"/>
+    <path id="number-4-0" transform="translate(1024 1024) rotate(0)" d="M-60.65 0 L60.65 0"/>
+    <path id="number-5-0" transform="translate(1706.67 1024) rotate(0)" d="M-60.65 0 L60.65 0"/>
+  </g>
+  <g id="guides" inkscape:groupmode="layer" inkscape:label="guides (hide before export)">
+    <style>
+      #guides .cut { fill: none; stroke: #e0007a; stroke-width: 2; }
+      #guides .label-top { fill: #e0007a; }
+    </style>
+    <polygon id="guide-face-0" class="cut" points="635.59,635.59 635.59,47.08 47.08,47.08 47.08,635.59"/>
+    <circle class="label-top" transform="translate(341.33 341.33) rotate(0)" cx="0" cy="-181.95" r="13"/>
+    <polygon id="guide-face-1" class="cut" points="729.75,47.08 729.75,635.59 1318.25,635.59 1318.25,47.08"/>
+    <circle class="label-top" transform="translate(1024 341.33) rotate(0)" cx="0" cy="-181.95" r="13"/>
+    <polygon id="guide-face-2" class="cut" points="1412.41,47.08 1412.41,635.59 2000.92,635.59 2000.92,47.08"/>
+    <polygon id="guide-face-3" class="cut" points="635.59,1318.25 635.59,729.75 47.08,729.75 47.08,1318.25"/>
+    <polygon id="guide-face-4" class="cut" points="1318.25,1318.25 1318.25,729.75 729.75,729.75 729.75,1318.25"/>
+    <circle class="label-top" transform="translate(1024 1024) rotate(0)" cx="0" cy="-181.95" r="13"/>
+    <polygon id="guide-face-5" class="cut" points="1412.41,729.75 1412.41,1318.25 2000.92,1318.25 2000.92,729.75"/>
+    <circle class="label-top" transform="translate(1706.67 1024) rotate(0)" cx="0" cy="-181.95" r="13"/>
+  </g>
+</svg>

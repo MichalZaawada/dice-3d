@@ -1,4 +1,19 @@
-import { createD20, D20_VALUES, isD20Error, type D20, type D20Skin, type D20Theme, type D20Value, type MotionMode } from 'dice-3d';
+import {
+  createDie,
+  createDieTemplateSvg,
+  DIE_TYPES,
+  getDieInfo,
+  getDieTemplate,
+  isD20Error,
+  type D20Theme,
+  type Die,
+  type DieInfo,
+  type DieOptions,
+  type DieSkin,
+  type DieType,
+  type DieValue,
+  type MotionMode,
+} from 'dice-3d';
 import templateSvgUrl from 'dice-3d/templates/d20-net-v1.svg?url';
 import templateJsonUrl from 'dice-3d/templates/d20-net-v1.json?url';
 import { createCustomAtlas, createTemplateArtwork } from './skins';
@@ -11,11 +26,19 @@ const $ = <T extends HTMLElement>(selector: string) => {
 
 const host = $<HTMLDivElement>('#dice');
 const output = $<HTMLOutputElement>('#result');
+const detail = $<HTMLSpanElement>('#result-detail');
 const errorBox = $<HTMLParagraphElement>('#error');
+const typeSelect = $<HTMLSelectElement>('#die-type');
 const valueSelect = $<HTMLSelectElement>('#value');
+const skinSelect = $<HTMLSelectElement>('#skin');
+const numbersSelect = $<HTMLSelectElement>('#numbers');
+const motionSelect = $<HTMLSelectElement>('#motion');
+const themeSelect = $<HTMLSelectElement>('#theme');
+const uploadInput = $<HTMLInputElement>('#upload');
+const templateSvg = $<HTMLAnchorElement>('#template-svg');
+const templateJson = $<HTMLAnchorElement>('#template-json');
+const percentileNote = $<HTMLParagraphElement>('#percentile-note');
 const controls = $<HTMLFormElement>('#controls');
-$<HTMLAnchorElement>('#template-svg').href = templateSvgUrl;
-$<HTMLAnchorElement>('#template-json').href = templateJsonUrl;
 
 const themes: Record<string, Partial<D20Theme>> = {
   ivory: { bodyColor: '#f2ede4', edgeColor: '#4a443c', numberColor: '#1d1b18' },
@@ -23,7 +46,11 @@ const themes: Record<string, Partial<D20Theme>> = {
   jade: { bodyColor: '#2f7d62', edgeColor: '#16392c', numberColor: '#f5f1e6' },
 };
 
-for (const value of D20_VALUES) valueSelect.add(new Option(String(value), String(value), value === 20, value === 20));
+const DEFAULT_TYPE: DieType = 'd20';
+for (const type of DIE_TYPES) {
+  const info = getDieInfo(type);
+  typeSelect.add(new Option(info.name, type, type === DEFAULT_TYPE, type === DEFAULT_TYPE));
+}
 
 // Browsers can restore form values independently of the newly created die.
 controls.reset();
@@ -36,77 +63,98 @@ function showError(error: unknown): void {
   errorBox.textContent = isD20Error(error) ? `${error.code}: ${error.message}` : String(error);
 }
 
-let die: D20 | undefined;
-try {
-  die = createD20(host, { value: 20, motion: 'system', theme: themes.jade });
-} catch (error) {
-  // Without WebGL2 the text result keeps working.
-  showError(error);
+let info: DieInfo = getDieInfo(DEFAULT_TYPE);
+let die: Die | undefined;
+/** Incremented whenever the die is replaced; async work started for an older die is ignored. */
+let generation = 0;
+
+/** Readable result plus, for the percentile dice, what the dice show. */
+function describe(value: DieValue): { text: string; detail: string } {
+  const text = info.format(value);
+  if (info.type === 'd100') {
+    const [tens, units] = info.labelsFor(value);
+    return { text, detail: `Tens die ${tens} + units die ${units}${value === 100 ? ' (00 + 0 = 100)' : ''}` };
+  }
+  if (info.type === 'df') return { text, detail: value === 1 ? 'Plus face' : value === -1 ? 'Minus face' : 'Blank face' };
+  if (info.type === 'd4') return { text, detail: 'Read at the top corner' };
+  return { text, detail: '' };
 }
 
-/** The application decides the result; the library only animates it. */
-function randomValue(): D20Value {
+function showResult(value: DieValue | null): void {
+  if (value === null) {
+    output.textContent = '…';
+    return;
+  }
+  const { text, detail: extra } = describe(value);
+  output.textContent = text;
+  detail.textContent = extra;
+  detail.hidden = extra === '';
+}
+
+/** The application decides the result; the library only animates it. Uniform over the documented results. */
+function randomValue(): DieValue {
   const random = new Uint32Array(1);
   crypto.getRandomValues(random);
-  return ((random[0]! % 20) + 1) as D20Value;
+  // DF: uniform over the six physical faces equals uniform over −1, 0 and +1 (two faces each).
+  return info.values[random[0]! % info.values.length]!;
 }
 
-const history: number[] = [];
-function recordRoll(value: D20Value): void {
-  history.unshift(value);
-  history.splice(8);
-  $('#history').replaceChildren(...history.map((number) => {
+const history: string[] = [];
+function renderHistory(): void {
+  const list = $('#history');
+  if (history.length === 0) {
+    const empty = document.createElement('li');
+    empty.className = 'empty';
+    empty.textContent = 'Your story starts with a roll.';
+    list.replaceChildren(empty);
+    return;
+  }
+  list.replaceChildren(...history.map((text) => {
     const item = document.createElement('li');
-    item.textContent = String(number);
+    item.textContent = text;
     return item;
   }));
 }
 
-async function roll(value: D20Value): Promise<void> {
-  output.textContent = '…';
-  try {
-    const result = await die?.rollTo(value);
-    if (!die || result?.status === 'completed') {
-      output.textContent = String(value);
-      valueSelect.value = String(value);
-      recordRoll(value);
-    }
-  } catch (error) {
-    output.textContent = String(die?.getSnapshot().value ?? value);
-    showError(error);
-  }
+function recordRoll(value: DieValue): void {
+  history.unshift(info.format(value));
+  history.splice(8);
+  renderHistory();
 }
 
-$('#roll').addEventListener('click', () => { void roll(randomValue()); });
-$('#roll-target').addEventListener('click', () => { void roll(Number(valueSelect.value) as D20Value); });
-$('#controls').addEventListener('submit', (event) => event.preventDefault());
+const valueOf = (key: string): DieValue => info.values.find((value) => String(value) === key) ?? info.defaultValue;
 
-valueSelect.addEventListener('change', async () => {
-  const value = Number(valueSelect.value) as D20Value;
-  try {
-    const result = await die?.orientTo(value);
-    if (!die || result?.status === 'completed') output.textContent = String(value);
-  } catch (error) { showError(error); }
-});
+function populateValues(): void {
+  valueSelect.replaceChildren(...info.values.map((value) => {
+    const { text, detail: extra } = describe(value);
+    const label = info.type === 'd100' ? `${text} (${info.labelsFor(value).join(' + ')})` : extra && info.type === 'df' ? `${text} · ${extra}` : text;
+    return new Option(label, String(value), value === info.defaultValue, value === info.defaultValue);
+  }));
+}
 
-$('#set-value').addEventListener('click', () => {
-  const value = Number(valueSelect.value) as D20Value;
-  die?.setValue(value);
-  output.textContent = String(value);
-});
+let blobUrls: string[] = [];
+function updateTemplateLinks(type: DieType): void {
+  for (const url of blobUrls) URL.revokeObjectURL(url);
+  blobUrls = [];
+  if (type === 'd20') {
+    templateSvg.href = templateSvgUrl;
+    templateJson.href = templateJsonUrl;
+    templateSvg.download = 'd20-net-v1.svg';
+    templateJson.download = 'd20-net-v1.json';
+    return;
+  }
+  const template = getDieTemplate(type);
+  const svg = URL.createObjectURL(new Blob([createDieTemplateSvg(type)], { type: 'image/svg+xml' }));
+  const json = URL.createObjectURL(new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' }));
+  blobUrls = [svg, json];
+  templateSvg.href = svg;
+  templateJson.href = json;
+  templateSvg.download = `${template.id}.svg`;
+  templateJson.download = `${template.id}.json`;
+}
 
-$<HTMLSelectElement>('#motion').addEventListener('change', (event) => {
-  die?.setMotion((event.target as HTMLSelectElement).value as MotionMode);
-});
-
-$<HTMLSelectElement>('#theme').addEventListener('change', (event) => {
-  die?.setTheme(themes[(event.target as HTMLSelectElement).value] ?? {});
-});
-
-let templateArtwork: HTMLCanvasElement | undefined;
-let customAtlas: ReturnType<typeof createCustomAtlas> | undefined;
-let activeSkin: D20Skin | null = null;
-function applySkin(skin: D20Skin | null): void {
+let activeSkin: DieSkin | null = null;
+function applySkin(skin: DieSkin | null): void {
   try {
     die?.setSkin(skin);
     activeSkin = skin;
@@ -117,22 +165,113 @@ function applySkin(skin: D20Skin | null): void {
   }
 }
 
-$<HTMLSelectElement>('#skin').addEventListener('change', (event) => {
-  const choice = (event.target as HTMLSelectElement).value;
-  if (choice === 'net') {
-    templateArtwork ??= createTemplateArtwork();
-    applySkin({ source: templateArtwork, layout: 'd20-net-v1', numbers: 'overlay' });
-  } else if (choice === 'custom') {
-    customAtlas ??= createCustomAtlas();
-    applySkin({ ...customAtlas, numbers: 'in-texture' });
-  } else {
-    applySkin(null);
+/** The selected built-in skin for the current type (procedural skins are generated per type, so they always fit). */
+function selectedSkin(): DieSkin | null {
+  const type = info.type as DieType;
+  if (skinSelect.value === 'net') return { source: createTemplateArtwork(type), layout: info.templateId, numbers: 'overlay' };
+  if (skinSelect.value === 'custom') return { ...createCustomAtlas(type), numbers: 'in-texture' };
+  return null;
+}
+
+function updateStatus(state: string): void {
+  host.dataset.state = state;
+  $('#status').textContent = state === 'animating' ? 'In motion' : state === 'disposed' ? 'Unavailable' : 'Ready';
+}
+
+/** Disposes the current die (cancelling its animation) and creates exactly one die of `type`. */
+function switchType(type: DieType): void {
+  generation++;
+  die?.dispose();
+  die = undefined;
+  host.replaceChildren();
+  info = getDieInfo(type);
+  host.dataset.type = type;
+  $('#die-name').textContent = info.name;
+  $('#die-shape').textContent = `${info.shape} · ${info.faces.length} faces${info.reading === 'vertex' ? ' · read at the top corner' : ''}`;
+  percentileNote.hidden = type !== 'd100' && type !== 'd10-tens';
+  percentileNote.textContent =
+    type === 'd100'
+      ? 'Percentile pair: the tens die shows 00–90, the units die 0–9. Add them; 00 + 0 means 100.'
+      : 'Percentile tens die: 00, 10, …, 90. Pair it with a units die (0–9); 00 + 0 means 100.';
+  populateValues();
+  history.length = 0;
+  renderHistory();
+  showResult(info.defaultValue);
+  // An uploaded image was painted for the previous template: drop it.
+  uploadInput.value = '';
+  uploadVersion++;
+  updateTemplateLinks(type);
+  errorBox.hidden = true;
+  try {
+    const skin = selectedSkin();
+    const options: DieOptions = {
+      type,
+      value: info.defaultValue,
+      motion: motionSelect.value as MotionMode,
+      theme: themes[themeSelect.value] ?? {},
+      ...(skin ? { skin } : {}),
+    };
+    die = createDie(host, options);
+    activeSkin = skin;
+  } catch (error) {
+    // Without WebGL2 the text result keeps working.
+    activeSkin = null;
+    showError(error);
+    updateStatus('disposed');
+    return;
   }
+  updateStatus('idle');
+  die.subscribe((snapshot) => updateStatus(snapshot.state));
+}
+
+async function roll(value: DieValue): Promise<void> {
+  const current = generation;
+  showResult(null);
+  try {
+    const result = await die?.rollTo(value);
+    if (current !== generation) return;
+    if (!die || result?.status === 'completed') {
+      showResult(value);
+      valueSelect.value = String(value);
+      recordRoll(value);
+    }
+  } catch (error) {
+    if (current !== generation) return;
+    showResult(die?.getSnapshot().value ?? value);
+    showError(error);
+  }
+}
+
+$('#roll').addEventListener('click', () => { void roll(randomValue()); });
+$('#roll-target').addEventListener('click', () => { void roll(valueOf(valueSelect.value)); });
+controls.addEventListener('submit', (event) => event.preventDefault());
+
+typeSelect.addEventListener('change', () => switchType(typeSelect.value as DieType));
+
+valueSelect.addEventListener('change', async () => {
+  const current = generation;
+  const value = valueOf(valueSelect.value);
+  try {
+    const result = await die?.orientTo(value);
+    if (current === generation && (!die || result?.status === 'completed')) showResult(value);
+  } catch (error) { if (current === generation) showError(error); }
 });
 
+$('#set-value').addEventListener('click', () => {
+  const value = valueOf(valueSelect.value);
+  try {
+    die?.setValue(value);
+    showResult(value);
+  } catch (error) { showError(error); }
+});
+
+motionSelect.addEventListener('change', () => die?.setMotion(motionSelect.value as MotionMode));
+themeSelect.addEventListener('change', () => die?.setTheme(themes[themeSelect.value] ?? {}));
+skinSelect.addEventListener('change', () => applySkin(selectedSkin()));
+
 let uploadVersion = 0;
-$<HTMLInputElement>('#upload').addEventListener('change', async (event) => {
-  const file = (event.target as HTMLInputElement).files?.[0];
+uploadInput.addEventListener('change', async () => {
+  const file = uploadInput.files?.[0];
   if (!file) return;
   const version = ++uploadVersion;
   let bitmap: ImageBitmap | undefined;
@@ -146,14 +285,13 @@ $<HTMLInputElement>('#upload').addEventListener('change', async (event) => {
     const context = source.getContext('2d');
     if (!context) throw new Error('Unable to decode the texture');
     context.drawImage(bitmap, 0, 0);
-    const numbers = $<HTMLSelectElement>('#numbers').value as 'overlay' | 'in-texture';
-    applySkin({ source, layout: 'd20-net-v1', numbers });
-  } catch (error) { showError(error); }
+    applySkin({ source, layout: info.templateId, numbers: numbersSelect.value as 'overlay' | 'in-texture' });
+  } catch (error) { if (version === uploadVersion) showError(error); }
   finally { bitmap?.close(); }
 });
 
-$<HTMLSelectElement>('#numbers').addEventListener('change', (event) => {
-  if (activeSkin) applySkin({ ...activeSkin, numbers: (event.target as HTMLSelectElement).value as 'overlay' | 'in-texture' });
+numbersSelect.addEventListener('change', () => {
+  if (activeSkin) applySkin({ ...activeSkin, numbers: numbersSelect.value as 'overlay' | 'in-texture' });
 });
 
 $<HTMLSelectElement>('#size').addEventListener('change', (event) => {
@@ -164,9 +302,5 @@ $<HTMLInputElement>('#dark').addEventListener('change', (event) => {
   document.body.classList.toggle('dark', (event.target as HTMLInputElement).checked);
 });
 
-die?.subscribe((snapshot) => {
-  host.dataset.state = snapshot.state;
-  $('#status').textContent = snapshot.state === 'animating' ? 'In motion' : snapshot.state === 'disposed' ? 'Unavailable' : 'Ready';
-});
-
+switchType(typeSelect.value as DieType);
 window.addEventListener('pagehide', () => die?.dispose());

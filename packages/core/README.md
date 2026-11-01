@@ -1,18 +1,18 @@
 # dice-3d
 
-Framework-agnostic 3D dice for the web, rendered with WebGL2. Version 0.1 supports the
-twenty-sided die (D20); the package name and internals are prepared for more dice types.
+Framework-agnostic 3D dice for the web, rendered with WebGL2: the standard RPG set (D4, D6,
+D8, D10, D12, D20), percentile dice (D100 and the tens D10), D2/D3, extended dice (D5, D7,
+D14, D16, D24, D30, D48, D60, D120), Fudge/Fate (DF) and your own custom dice.
 
-- Real 3D geometry: a regular icosahedron with a fixed, documented numbering.
+- Real 3D geometry with a fixed, documented numbering for every type.
 - `orientTo` turns a face to the viewer; `rollTo` plays a roll animation that ends exactly on
   the value your application chose. The library never picks results.
 - Themes, injectable textures (skins) on an official template or with your own UV layout.
-- No runtime dependencies, no fonts, no network access, about 11 kB gzip.
+- No runtime dependencies, no fonts, no network access, about 21 kB gzip.
 - Safe to import during server-side rendering.
 
-Additional RPG dice (standard, percentile, Fate and extended/custom dice) are specified
-in the [implementation scope](../../docs/dice-support.md). These are planned; D20 is
-the only currently implemented type.
+`createD20` is the original D20 API and is unchanged. `createDie` creates any type with the
+same lifecycle. The full support matrix is in [dice support](../../docs/dice-support.md).
 
 React users: see [`dice-3d-react`](../react/README.md).
 
@@ -54,15 +54,73 @@ die?.dispose();
 
 The container decides the size through CSS. The library appends one `<canvas>` that fills it.
 
+### Any die type
+
+```ts
+import { createDie, getDieInfo } from 'dice-3d';
+
+const die = createDie(host, { type: 'd100', value: 100, motion: 'system' });
+const info = die.info; // same object as getDieInfo('d100')
+const result = await die.rollTo(37); // typed: 1–100
+if (result.status === 'completed') output.textContent = info.format(result.value); // "37"
+info.labelsFor(37); // ['30', '7']: tens die and units die
+```
+
+## Dice types
+
+| Type | Shape | Results | Notes |
+| --- | --- | --- | --- |
+| `d2` | coin | 1–2 | Blank rim. |
+| `d3` | triangular prism ("log") | 1–3 | Numbered long faces, blank end caps. |
+| `d4` | tetrahedron | 1–4 | Read at the **top corner** of the front face: every face prints a number at each corner, and the upright one at the top is the result. Each result has three equivalent poses. |
+| `d5`, `d7` | pentagonal / heptagonal prism | 1–5, 1–7 | Logs like the D3, numbered around the axis. |
+| `d6` | cube | 1–6 | |
+| `d8` | octahedron | 1–8 | |
+| `d10`, `d14`, `d16` | pentagonal / heptagonal / octagonal trapezohedron | 1–10, 1–14, 1–16 | Kite faces; labels point at the apex. The D10 prints `10` (not `0`). |
+| `d12` | dodecahedron | 1–12 | |
+| `d20` | icosahedron | 1–20 | The original `createD20` die, numbering and `d20-net-v1` template. |
+| `d24` | tetrakis hexahedron | 1–24 | |
+| `d30` | rhombic triacontahedron | 1–30 | |
+| `d48` | disdyakis dodecahedron | 1–48 | |
+| `d60` | pentakis dodecahedron | 1–60 | |
+| `d120` | disdyakis triacontahedron | 1–120 | Small labels; give it ≥ 240 CSS px to read them. |
+| `d100` | two pentagonal trapezohedra | 1–100 | Percentile pair in one canvas: tens die (00–90) left, units die (0–9) right. 37 shows 30 + 7; **00 + 0 means 100**. |
+| `d10-tens` | pentagonal trapezohedron | 0, 10, …, 90 | Percentile tens die; 0 is printed `00`. |
+| `df` | cube | −1, 0, +1 | Fudge/Fate: two faces each of minus, blank and plus. |
+
+Numbering: wherever a die has opposite faces they sum to N + 1 (D16: kites half a turn
+apart); prisms are numbered around their axis. 6/9-style labels (and 16/91, 66/99 … on the
+D120) are underlined. All dice share the camera framing, so they look the same size.
+
+**Repeated outcomes** (DF, D4 corners, custom dice): the result decides the value, the
+physical face is chosen deterministically — the equivalent pose closest to the die's current
+rotation (ties: the first one in face order). The same start state and value always land on
+the same face.
+
+The library never picks results. Rolling uniformly over `info.values` matches the physical
+distribution of every built-in die (DF: two faces per result, so uniform over −1/0/+1).
+Game rules, dice pools and modifiers are out of scope.
+
 ## API
 
 ```ts
 createD20(container: HTMLElement, options?: D20Options): D20
+createDie<T extends DieType | CustomDieDefinition>(container: HTMLElement, options: DieOptions<T>): Die<DieValueOf<T>>
 ```
+
+`createDie` takes the options below plus `type` (required); `value` defaults to
+`info.defaultValue` (the highest result; DF: +1, tens die: 0). `Die` has every `D20` method
+plus `info`. Values are typed per type (`DieValueOf<'d6'>` is `1 | … | 6`).
+
+Metadata helpers (work on the server): `getDieInfo(type)` returns `{ type, name, shape,
+reading, values, defaultValue, faces, templateId, labelsFor(value), format(value) }`;
+`getDieTemplate(type)` returns the skin template (UV polygons and label positions);
+`createDieTemplateSvg(type)` returns the artwork template as SVG; `DIE_TYPES` lists the
+built-in types in display order.
 
 | Option | Default | Notes |
 | --- | --- | --- |
-| `value` | `20` | Integer 1–20. |
+| `value` | `20` (`createDie`: `info.defaultValue`) | Integer 1–20; for `createDie` any result of the type. |
 | `theme` | ivory body, dark edges and numbers, transparent background | `Partial<D20Theme>`; colors are `#RRGGBB`, `background` may be `'transparent'`. |
 | `skin` | default appearance | See [Skins](#skins). |
 | `motion` | `'system'` | `'system' \| 'full' \| 'reduced' \| 'none'`. |
@@ -84,8 +142,40 @@ Both animation methods resolve with
 `{ status: 'completed', value }` or `{ status: 'cancelled', reason: 'replaced' | 'aborted' | 'disposed' }`.
 They reject only on renderer failures (for example `CONTEXT_LOST`).
 
-Other exports: `D20Error`, `isD20Error`, `D20_VALUES`, `isD20Value`, `D20_DEFAULT_THEME` and
-`D20_NET_V1` (template description with its UV table), plus all public types.
+Other exports: `D20Error` (alias `DieError`), `isD20Error` (alias `isDieError`), `D20_VALUES`,
+`isD20Value`, `isDieType`, `DIE_SHAPES`, `D20_DEFAULT_THEME`, `defineDie` and `D20_NET_V1`
+(template description with its UV table), plus all public types.
+
+### Custom dice
+
+```ts
+import { createDie, defineDie } from 'dice-3d';
+
+const hits = defineDie({
+  id: 'hit-die',
+  shape: 'd6', // faces in D6 value order: face i sits where a D6 shows i + 1
+  faces: [
+    { value: 'hit', label: { strokes: [[[0.5, 0], [0.8, 1], [0, 0.35], [1, 0.35], [0.2, 1], [0.5, 0]]] } },
+    { value: 'hit', label: '+' },
+    { value: 'crit', label: '++' },
+    { value: 'miss', label: null }, // blank
+    { value: 'miss', label: null },
+    { value: 'miss', label: '-' },
+  ],
+});
+const die = createDie(host, { type: hits, value: 'miss' });
+await die.rollTo('hit');
+```
+
+- `shape`: any built-in numeric shape (`'d2'` … `'d120'`), `{ prism: n }` (n numbered sides,
+  3–24) or `{ trapezohedron: n }` (2n kites, 3–24). With `'d4'` the entries are corner results.
+- `faces`: one entry per face; values are finite numbers or non-empty strings and may repeat.
+- `label`: default `String(value)`; at most four characters from `0–9`, `+`, `-`, `−`; a
+  drawn symbol `{ strokes }` (polylines in a unit box, y down); or `null`/`''` for blank. No
+  artwork is bundled: game-specific symbols are drawn by you or painted into a skin.
+- `defineDie` validates eagerly and returns a frozen copy. Keep that object: dice created from
+  the same definition share their mesh, and `DieView` recreates the die when it changes.
+- The skin template id is `<id>-grid-v1`.
 
 ### Concurrency rules
 
@@ -117,8 +207,8 @@ All errors are `D20Error` instances with a `code`:
 
 | Code | When |
 | --- | --- |
-| `INVALID_ARGUMENT` | Synchronously, before any state change: value outside 1–20, negative/non-finite duration, bad color, bad option, invalid skin (see below). |
-| `WEBGL_UNAVAILABLE` | `createD20` outside a browser, without WebGL2 or when the shaders fail to compile. |
+| `INVALID_ARGUMENT` | Synchronously, before any state change: value not a result of the die (e.g. outside 1–20), unknown type, invalid custom definition, negative/non-finite duration, bad color, bad option, invalid skin (see below). |
+| `WEBGL_UNAVAILABLE` | `createD20`/`createDie` outside a browser, without WebGL2 or when the shaders fail to compile. |
 | `CONTEXT_LOST` | Rejects the running animation when the WebGL context is lost; the instance becomes `disposed`. |
 | `TEXTURE_UPLOAD_FAILED` | The image cannot be uploaded (CORS-tainted image, GPU error). The previous look is kept. |
 | `DISPOSED` | A method other than `dispose`/`getSnapshot` was called after disposal. |
@@ -153,6 +243,18 @@ die.setSkin(null); // back to the default appearance
   `'in-texture'` hides them and your artwork must contain the numbers (including 6/9 markers).
 - Transparent pixels are composited over `bodyColor`; lighting applies to the image (sRGB).
 
+### Skins for other dice
+
+Every type has its own grid template: each face upright in its own cell, in face index order
+(built-in numeric dice: face i shows i + 1). Pass the type's `info.templateId`, e.g.
+`{ source, layout: 'd6-grid-v1' }`, or an explicit array with one UV polygon per face
+(polygon corners in the order of `getDieTemplate(type).faces[i].uv`, counter-clockwise on
+screen). Templates ship as `dice-3d/templates/<type>-grid-v1.svg` and `.json` for every
+built-in type except the D20 (which keeps `d20-net-v1`); custom dice get theirs from
+`getDieTemplate`/`createDieTemplateSvg`. A layout made for another type — including
+`d20-net-v1` on a non-D20 — is rejected and the previous skin stays. Coin rims and prism end
+caps are not part of templates and keep the body color.
+
 Validation (`INVALID_ARGUMENT`) covers: supported and decoded source with positive size, at most
 the device's `MAX_TEXTURE_SIZE`, all 20 faces present and no extra keys, finite UVs in 0–1,
 non-degenerate and non-mirrored triangles, the template aspect ratio. A failed `setSkin` keeps
@@ -168,8 +270,9 @@ your fallback when WebGL2 is unavailable.
 ## Server-side rendering
 
 Importing the package has no side effects and does not touch `window` or `document`.
-`createD20` must run in the browser (for example inside `useEffect`); on the server it throws
-`WEBGL_UNAVAILABLE`.
+`createD20` and `createDie` must run in the browser (for example inside `useEffect`); on the
+server they throw `WEBGL_UNAVAILABLE`. `getDieInfo`, `getDieTemplate` and
+`createDieTemplateSvg` work anywhere.
 
 ## Limitations
 
@@ -178,6 +281,10 @@ Importing the package has no side effects and does not touch `window` or `docume
   `CONTEXT_LOST` and become `disposed`.
 - No physics: the roll is an artistic animation, not a simulation. Results come from your app.
 - No automatic recovery after context loss; create a new instance.
+- The D100 is one instance with two bodies in a single canvas (not two independent dice).
+- Labels are drawn with the built-in stroke font (digits, `+`, `−`) or your stroke symbols; there
+  is no text font, so letters need a symbol or a skin.
+- Custom shapes are limited to the built-in shapes, prisms and trapezohedra.
 
 ## License
 

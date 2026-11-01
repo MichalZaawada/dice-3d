@@ -1,0 +1,217 @@
+{
+  "template": "d6-grid-v1",
+  "version": 1,
+  "die": "d6",
+  "description": "UV layout of the dice-3d D6 skin template. Coordinates are normalized; (0, 0) is the top-left corner of the image. Every face is upright in its own cell, in face index order.",
+  "width": 2048,
+  "height": 1365,
+  "aspectRatio": 1.5003663003663004,
+  "uvOrigin": "top-left",
+  "vertexConvention": "Face polygons are listed counter-clockwise on screen, in the order used by array skin layouts.",
+  "faces": [
+    {
+      "index": 0,
+      "value": 1,
+      "label": "1",
+      "uv": [
+        [
+          0.310345,
+          0.465631
+        ],
+        [
+          0.310345,
+          0.034491
+        ],
+        [
+          0.022989,
+          0.034491
+        ],
+        [
+          0.022989,
+          0.465631
+        ]
+      ],
+      "labels": [
+        {
+          "label": "1",
+          "center": [
+            0.166667,
+            0.250061
+          ],
+          "rotation": 0,
+          "size": 433.211788
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "value": 2,
+      "label": "2",
+      "uv": [
+        [
+          0.356322,
+          0.034491
+        ],
+        [
+          0.356322,
+          0.465631
+        ],
+        [
+          0.643678,
+          0.465631
+        ],
+        [
+          0.643678,
+          0.034491
+        ]
+      ],
+      "labels": [
+        {
+          "label": "2",
+          "center": [
+            0.5,
+            0.250061
+          ],
+          "rotation": 0,
+          "size": 433.211788
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "value": 3,
+      "label": "3",
+      "uv": [
+        [
+          0.689655,
+          0.034491
+        ],
+        [
+          0.689655,
+          0.465631
+        ],
+        [
+          0.977011,
+          0.465631
+        ],
+        [
+          0.977011,
+          0.034491
+        ]
+      ],
+      "labels": [
+        {
+          "label": "3",
+          "center": [
+            0.833333,
+            0.250061
+          ],
+          "rotation": 0,
+          "size": 433.211788
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "value": 4,
+      "label": "4",
+      "uv": [
+        [
+          0.310345,
+          0.965753
+        ],
+        [
+          0.310345,
+          0.534613
+        ],
+        [
+          0.022989,
+          0.534613
+        ],
+        [
+          0.022989,
+          0.965753
+        ]
+      ],
+      "labels": [
+        {
+          "label": "4",
+          "center": [
+            0.166667,
+            0.750183
+          ],
+          "rotation": 0,
+          "size": 433.211788
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "value": 5,
+      "label": "5",
+      "uv": [
+        [
+          0.643678,
+          0.965753
+        ],
+        [
+          0.643678,
+          0.534613
+        ],
+        [
+          0.356322,
+          0.534613
+        ],
+        [
+          0.356322,
+          0.965753
+        ]
+      ],
+      "labels": [
+        {
+          "label": "5",
+          "center": [
+            0.5,
+            0.750183
+          ],
+          "rotation": 0,
+          "size": 433.211788
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "value": 6,
+      "label": "6",
+      "uv": [
+        [
+          0.689655,
+          0.534613
+        ],
+        [
+          0.689655,
+          0.965753
+        ],
+        [
+          0.977011,
+          0.965753
+        ],
+        [
+          0.977011,
+          0.534613
+        ]
+      ],
+      "labels": [
+        {
+          "label": "6",
+          "center": [
+            0.833333,
+            0.750183
+          ],
+          "rotation": 0,
+          "size": 433.211788
+        }
+      ]
+    }
+  ]
+}

@@ -61,27 +61,81 @@ export const DIGIT_GLYPHS: readonly (readonly Polyline[])[] = [
   /* 9 */ rotateHalfTurn(SIX),
 ];
 
-/** Values that carry an orientation marker (underline) to tell 6 and 9 apart. */
-export function needsOrientationMarker(value: number): boolean {
-  return value === 6 || value === 9;
+const MINUS: readonly Polyline[] = [[[0.02, 0.5], [0.58, 0.5]]];
+const PLUS: readonly Polyline[] = [...MINUS, [[0.3, 0.22], [0.3, 0.78]]];
+
+/** Characters available for text labels. */
+export const LABEL_GLYPHS: Readonly<Record<string, readonly Polyline[]>> = Object.freeze({
+  ...Object.fromEntries(DIGIT_GLYPHS.map((glyph, digit) => [String(digit), glyph])),
+  '+': PLUS,
+  '-': MINUS,
+  '\u2212': MINUS,
+});
+
+/** User-drawn symbol: polylines in a unit box (x right, y down, 0 to 1). */
+export interface SymbolStrokes {
+  readonly strokes: readonly (readonly (readonly [number, number])[])[];
+}
+
+export type LabelSource = string | SymbolStrokes;
+
+const ROTATED_DIGIT: Readonly<Record<string, string>> = { '0': '0', '1': '1', '6': '9', '8': '8', '9': '6' };
+
+/** The text a numeric label reads as when turned upside down, or null when it does not read as digits. */
+export function rotatedReading(label: string): string | null {
+  let result = '';
+  for (const char of label) {
+    const rotated = ROTATED_DIGIT[char];
+    if (rotated === undefined) return null;
+    result = rotated + result;
+  }
+  return result;
 }
 
 /**
- * Polylines of a number label, centered horizontally on 0 with the digits
- * spanning y ∈ [-0.5, 0.5] (glyph units, y down).
+ * Whether a label needs an orientation underline: it reads as a different
+ * label of the same die when turned upside down (6 and 9 on a D20).
  */
-export function labelPolylines(value: number): Polyline[] {
-  if (!Number.isInteger(value) || value < 0) throw new Error(`Unsupported label ${value}`);
-  const digits = String(value).split('').map(Number);
-  const width = GLYPH_WIDTH + (digits.length - 1) * GLYPH_ADVANCE;
+export function needsOrientationMarker(label: number | string, labels?: Iterable<string>): boolean {
+  const text = String(label);
+  const set = new Set(labels ?? ['6', '9']);
+  const rotated = rotatedReading(text);
+  return rotated !== null && rotated !== text && set.has(rotated);
+}
+
+export function isSupportedText(text: string): boolean {
+  return [...text].every((char) => char in LABEL_GLYPHS);
+}
+
+/** Width and vertical extent (glyph units, before the stroke) of a label drawn by {@link labelPolylines}. */
+export function labelExtent(label: LabelSource, marker = false): { width: number; top: number; bottom: number } {
+  if (typeof label !== 'string') return { width: 1, top: -0.5, bottom: 0.5 };
+  const count = [...label].length;
+  return { width: GLYPH_WIDTH + (count - 1) * GLYPH_ADVANCE, top: -0.5, bottom: marker ? MARKER_Y - 0.5 : 0.5 };
+}
+
+/**
+ * Polylines of a label, centered horizontally on 0 with the glyphs spanning
+ * y ∈ [-0.5, 0.5] (glyph units, y down). Symbols span a 1 × 1 box.
+ * `marker` adds the orientation underline (defaults to the D20 rule for 6 and 9).
+ */
+export function labelPolylines(label: number | LabelSource, marker?: boolean): Polyline[] {
+  if (typeof label === 'object') {
+    return label.strokes.map((line) => line.map(([x, y]) => [x - 0.5, y - 0.5] as Point));
+  }
+  if (typeof label === 'number' && (!Number.isInteger(label) || label < 0)) throw new Error(`Unsupported label ${label}`);
+  const text = String(label);
+  const chars = [...text];
+  const { width } = labelExtent(text);
   const left = -width / 2;
   const lines: Polyline[] = [];
-  digits.forEach((digit, index) => {
-    const glyph = DIGIT_GLYPHS[digit] ?? [];
+  chars.forEach((char, index) => {
+    const glyph = LABEL_GLYPHS[char];
+    if (!glyph) throw new Error(`Unsupported label character ${JSON.stringify(char)}`);
     const offsetX = left + index * GLYPH_ADVANCE;
     for (const line of glyph) lines.push(line.map(([x, y]) => [x + offsetX, y - 0.5] as Point));
   });
-  if (needsOrientationMarker(value)) {
+  if (marker ?? needsOrientationMarker(text)) {
     lines.push([
       [left + 0.04, MARKER_Y - 0.5],
       [left + width - 0.04, MARKER_Y - 0.5],

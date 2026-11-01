@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { D20_VALUES, d20FaceFrames } from '../src/geometry/d20.js';
+import { D20_VALUES } from '../src/geometry/d20.js';
+import { builtInDieModel } from '../src/geometry/dice.js';
 import { buildDieMesh, MESH_STRIDE } from '../src/renderer/dieMesh.js';
 import { labelPolylines, MARKER_Y, needsOrientationMarker } from '../src/renderer/glyphs.js';
 import { ATLAS_GLYPH_SCALE, createNumberAtlas } from '../src/renderer/numberAtlas.js';
@@ -56,7 +57,7 @@ describe('number atlas', () => {
 
 describe('die mesh', () => {
   it('builds three vertices per face with label coordinates centered on the face', () => {
-    const mesh = buildDieMesh(d20FaceFrames(), atlas);
+    const mesh = buildDieMesh(builtInDieModel('d20').bodies, atlas);
     expect(mesh.vertexCount).toBe(60);
     expect(mesh.data).toHaveLength(60 * MESH_STRIDE);
     for (let face = 0; face < 20; face++) {

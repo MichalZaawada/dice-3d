@@ -1,5 +1,5 @@
 import type { Pose } from '../animation/tracks.js';
-import type { FaceUV } from '../types.js';
+import type { FaceUVPolygon } from '../types.js';
 
 /** Theme after validation, still in `#RRGGBB` notation. */
 export interface ResolvedTheme {
@@ -16,7 +16,7 @@ export interface PreparedSkin {
   readonly source: TexImageSource;
   readonly width: number;
   readonly height: number;
-  readonly faces: readonly FaceUV[];
+  readonly faces: readonly FaceUVPolygon[];
   readonly numbers: 'overlay' | 'in-texture';
 }
 
@@ -36,7 +36,8 @@ export interface DieRenderer {
   setSize(width: number, height: number): void;
   /** Whether a frame can currently be drawn (positive size, live context). */
   canRender(): boolean;
-  render(pose: Pose): void;
+  /** Draws one pose per body (a single pose for all dice except the percentile pair). */
+  render(poses: readonly Pose[]): void;
   isContextLost(): boolean;
   dispose(): void;
 }

@@ -1,4 +1,5 @@
-// Generates packages/core/templates/d20-net-v1.{json,svg} from the library's own tables.
+// Generates packages/core/templates/d20-net-v1.{json,svg} and <type>-grid-v1.{json,svg} for every other
+// built-in die from the library's own tables.
 // Run with `npm run templates`; a unit test fails when the files drift from the source.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -125,3 +126,31 @@ ${guideFaces}
 `;
 writeFileSync(`${outDir}d20-net-v1.svg`, svg);
 console.log(`Wrote ${outDir}d20-net-v1.json and d20-net-v1.svg`);
+
+const { DIE_TYPES, getDieInfo, getDieTemplate, createDieTemplateSvg } = await loadCoreModule('index.ts');
+for (const type of DIE_TYPES) {
+  if (type === 'd20') continue;
+  const info = getDieInfo(type);
+  const template = getDieTemplate(type);
+  const grid = {
+    template: template.id,
+    version: template.version,
+    die: type,
+    description: `UV layout of the dice-3d ${info.name} skin template. Coordinates are normalized; (0, 0) is the top-left corner of the image. Every face is upright in its own cell, in face index order.`,
+    width: template.width,
+    height: template.height,
+    aspectRatio: template.aspectRatio,
+    uvOrigin: 'top-left',
+    vertexConvention: 'Face polygons are listed counter-clockwise on screen, in the order used by array skin layouts.',
+    faces: template.faces.map((face) => ({
+      index: face.index,
+      value: face.value,
+      label: face.label,
+      uv: face.uv,
+      labels: face.labels.map(({ label, center, rotation, size }) => ({ label, center, rotation, size })),
+    })),
+  };
+  writeFileSync(`${outDir}${template.id}.json`, `${JSON.stringify(grid, null, 2)}\n`);
+  writeFileSync(`${outDir}${template.id}.svg`, createDieTemplateSvg(type));
+}
+console.log(`Wrote ${DIE_TYPES.length - 1} grid templates`);

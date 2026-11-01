@@ -58,8 +58,10 @@ void main() {
   float diffuse = max(dot(normal, uLightDirection), 0.0);
 
   // Skin texels are sRGB (decoded by the texture format) and composited over the body color.
-  vec4 skin = texture(uSkin, vSkinUV);
-  vec3 base = mix(uBodyColor, mix(uBodyColor, skin.rgb, skin.a), uUseSkin);
+  // Trim surfaces (coin rim, prism caps) carry negative UVs and keep the body color.
+  vec4 skin = texture(uSkin, clamp(vSkinUV, 0.0, 1.0));
+  float useSkin = uUseSkin * step(0.0, vSkinUV.x);
+  vec3 base = mix(uBodyColor, mix(uBodyColor, skin.rgb, skin.a), useSkin);
   vec3 color = base * (0.38 + 0.72 * diffuse);
 
   // Numbers are part of the face shading (no decal geometry, hence no z-fighting).

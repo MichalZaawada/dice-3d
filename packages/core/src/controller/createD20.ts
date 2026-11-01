@@ -1,21 +1,37 @@
 import { D20Error } from '../errors.js';
-import { d20FaceFrames } from '../geometry/d20.js';
+import { builtInDieModel, resolveDieModel, type DieModel } from '../geometry/dice.js';
 import { buildDieMesh, type DieMesh } from '../renderer/dieMesh.js';
-import { createNumberAtlas } from '../renderer/numberAtlas.js';
+import { createLabelAtlas } from '../renderer/numberAtlas.js';
 import { createWebGL2Renderer } from '../renderer/webgl2Renderer.js';
-import type { D20, D20Options, D20Value } from '../types.js';
+import type { CustomDieDefinition, D20, D20Options, Die, DieOptions, DieType, DieValueOf } from '../types.js';
+import { dieInfo } from './dieInfo.js';
 import { createBrowserEnvironment } from './environment.js';
-import { mountD20 } from './mountD20.js';
+import { mountDie } from './mountD20.js';
 
-let sharedMesh: DieMesh<D20Value> | undefined;
+const meshes = new WeakMap<DieModel, DieMesh>();
 
-/** Immutable mesh and number atlas, built on first use and shared by all instances. */
-function d20Mesh(): DieMesh<D20Value> {
-  if (!sharedMesh) {
-    const frames = d20FaceFrames();
-    sharedMesh = buildDieMesh(frames, createNumberAtlas(frames.map((frame) => frame.value)));
+/** Immutable mesh and label atlas of a die type, built on first use and shared by all instances. */
+function meshOf(model: DieModel): DieMesh {
+  let mesh = meshes.get(model);
+  if (!mesh) {
+    mesh = buildDieMesh(model.bodies, createLabelAtlas(model.atlasLabels));
+    meshes.set(model, mesh);
   }
-  return sharedMesh;
+  return mesh;
+}
+
+function assertBrowser(name: string): void {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    throw new D20Error('WEBGL_UNAVAILABLE', `${name} requires a browser environment`);
+  }
+}
+
+function browserDependencies(model: DieModel) {
+  return {
+    window,
+    environment: createBrowserEnvironment(window),
+    createRenderer: (canvas: HTMLCanvasElement) => createWebGL2Renderer(canvas, meshOf(model)),
+  };
 }
 
 /**
@@ -27,12 +43,22 @@ function d20Mesh(): DieMesh<D20Value> {
  * `TEXTURE_UPLOAD_FAILED` when the initial skin cannot be uploaded.
  */
 export function createD20(container: HTMLElement, options?: D20Options): D20 {
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
-    throw new D20Error('WEBGL_UNAVAILABLE', 'createD20 requires a browser environment');
+  assertBrowser('createD20');
+  const model = builtInDieModel('d20');
+  return mountDie(container, options, model, browserDependencies(model)) as unknown as D20;
+}
+
+/**
+ * Creates a die of any built-in type (`'d6'`, `'d100'`, `'df'`, …) or a custom
+ * definition inside `container`. Same lifecycle, errors and options as
+ * {@link createD20}, plus `type` and the `info` property.
+ */
+export function createDie<T extends DieType | CustomDieDefinition>(container: HTMLElement, options: DieOptions<T>): Die<DieValueOf<T>> {
+  assertBrowser('createDie');
+  if (typeof options !== 'object' || options === null) {
+    throw new D20Error('INVALID_ARGUMENT', 'options must be an object with a type');
   }
-  return mountD20(container, options, {
-    window,
-    environment: createBrowserEnvironment(window),
-    createRenderer: (canvas) => createWebGL2Renderer(canvas, d20Mesh()),
-  });
+  const model = resolveDieModel((options as { type?: unknown }).type);
+  const die = mountDie(container, options, model, browserDependencies(model));
+  return { info: dieInfo(model), ...die } as unknown as Die<DieValueOf<T>>;
 }

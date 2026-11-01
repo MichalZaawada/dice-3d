@@ -1,70 +1,65 @@
-# RPG dice support specification
+# RPG dice support
 
-Status: implementation target. The currently shipped API supports **D20 only**.
-This document defines the remaining work; it does not advertise unimplemented APIs.
+Status: **implemented**. Every preset below is available through `createDie` (core) and
+`<DieView>` (React), verified by unit tests and by browser tests in Chromium, Firefox and
+WebKit (see [testing](testing.md)). `createD20`, the D20 types, numbering, orientations and the
+`d20-net-v1` template are unchanged.
 
-## Required dice
+## Presets
 
-| Family | Required types | Result semantics |
-| --- | --- | --- |
-| Standard RPG set | D4, D6, D8, D10, D12, D20 | Integers 1 through N. |
-| Percentile | D100 and percentile D10 | D100 returns 1–100; a tens die displays 00, 10, …, 90. With a units die displaying 0–9, 00 + 0 means 100. Keep display labels separate from numeric results. |
-| Small dice | D2, D3 | Results 1–2 and 1–3; coin or repeated-label geometry is acceptable when documented. |
-| Extended numeric set | D5, D7, D14, D16, D24, D30, D48, D60, D120 | Integers 1 through N; document the chosen physical shape and numbering. |
-| Fudge / Fate | DF (six faces) | Two faces each of −1, 0, +1; display minus, blank and plus. A roll selects a result, with a deterministic choice among equivalent physical faces. |
-| Custom / symbolic | User-defined face labels and outcomes | Extensible definitions for other side counts, repeated outcomes and game-specific symbols. No bundled proprietary artwork. |
+| Family | Types | Shape | Results and labels |
+| --- | --- | --- | --- |
+| Standard RPG set | `d4`, `d6`, `d8`, `d10`, `d12`, `d20` | tetrahedron, cube, octahedron, pentagonal trapezohedron, dodecahedron, icosahedron | Integers 1–N, printed as numbers. D4: read at the top corner (below). D10 prints `10`. |
+| Percentile | `d100`, `d10-tens` | two pentagonal trapezohedra; one pentagonal trapezohedron | D100: 1–100, drawn as a tens die (`00`–`90`) and a units die (`0`–`9`) side by side in one canvas; `00` + `0` is 100. Tens die alone: 0, 10, …, 90 with 0 printed `00`. `info.labelsFor(37)` → `['30', '7']`. |
+| Small dice | `d2`, `d3` | coin; triangular prism ("log") | 1–2 on the coin faces (blank rim); 1–3 on the long faces (blank end caps). |
+| Extended numeric | `d5`, `d7`, `d14`, `d16`, `d24`, `d30`, `d48`, `d60`, `d120` | pentagonal and heptagonal prisms; heptagonal and octagonal trapezohedra; tetrakis hexahedron; rhombic triacontahedron; disdyakis dodecahedron; pentakis dodecahedron; disdyakis triacontahedron | Integers 1–N. |
+| Fudge / Fate | `df` | cube | Two faces each of −1 (`−`), 0 (blank) and +1 (`+`); opposite faces are + / − and blank / blank. |
+| Custom / symbolic | `defineDie({ id, shape, faces })` | any built-in numeric shape, `{ prism: 3–24 }`, `{ trapezohedron: 3–24 }` | Numbers or strings as results, repeats allowed; labels from `0–9 + - −` (≤ 4 characters), drawn stroke symbols, or blank. |
 
-“Every RPG die” is an open-ended requirement: games can define new side counts and
-symbols. Built-in presets cover the table above; custom definitions provide the
-extension point instead of claiming a finite list is exhaustive. Rendering a die
-does not implement a game's rules, dice pools, modifiers or result probabilities.
+“Every RPG die” is open-ended: the presets cover the table above and custom definitions are
+the extension point. Rendering a die does not implement a game's rules, pools, modifiers or
+probabilities; the application always chooses the result.
 
-## Core contract
+### Conventions
 
-- Provide a typed common factory and die-type registry, with documented values,
-  labels, geometry and defaults. Exact export names are finalized with implementation.
-- Preserve existing `createD20`, D20 types, numbering, orientations and `d20-net-v1`
-  textures. Existing consumers must continue to compile and behave the same way.
-- Every built-in type supports immediate values, orientation, rolling, themes,
-  motion preferences, snapshots, cancellation and disposal through the shared lifecycle.
-- Results are chosen by the caller, never by the renderer. Reject invalid results
-  before changing state. Numeric values and rendered labels are distinct concepts.
-- Triangulate polygonal faces without visible internal diagonals or duplicated labels.
-  D4 needs an explicit, legible result convention; repeated labels need separate
-  physical face identity. High-face-count dice must remain readable when enlarged.
-- Support skins for each type through documented per-type UV layouts or templates.
-  Never apply the D20 net silently to another shape. Reject incompatible skins
-  without corrupting the previous appearance.
-- Maintain WebGL2, SSR-safe imports, no runtime dependencies, idle rendering and
-  deterministic caller-selected results. Expose equivalent support in the React
-  adapter while preserving `D20View`.
+- **Numbering**: opposite faces sum to N + 1 wherever a die has opposite faces (D16: kites half
+  a turn apart); prisms count around their axis; built-in face i shows i + 1.
+- **D4**: every face prints the number of each corner near that corner, pointing at it. The
+  result is the upright number at the top corner of the face turned to the viewer (equivalently,
+  the number repeated around the top vertex). Each result has three equivalent poses.
+- **Repeated outcomes** (DF, D4, custom): the value is chosen by the caller; the physical face is
+  the equivalent pose nearest to the current rotation (ties: first in face order), so the same
+  state and value always land on the same face.
+- **Labels vs. results**: `info.values` are results, `info.faces[i].label` and
+  `info.labelsFor(value)` are what is printed, `info.format(value)` is readable result text
+  (`'+1'`, `'00'`, `'37'`).
+- **Orientation markers**: labels that read as another label of the same die upside down are
+  underlined (6/9 on most dice; also 16/91, 66/99, 68/89 … on the D120).
+- **Distribution for demos**: uniform over `info.values` matches every built-in die (DF: two
+  faces per result).
 
-## Demo
+## Contract checklist
 
-Keep the existing minimal layout: dice-3d logo plus die preview and controls.
-Add a labeled die-type selector containing every implemented built-in preset.
-Switching type must dispose the old instance, create exactly one new canvas,
-update result choices and labels, and reset incompatible skin/upload state and
-recent history. Preserve compatible theme, size and motion settings. Handle rapid
-switches and pending rolls without letting old results update the new die.
+| Requirement | Implementation |
+| --- | --- |
+| Typed factory and registry | `createDie(container, { type, … })`, `DieType`, `DieValueMap`/`DieValueOf`, `DIE_TYPES`, `getDieInfo`, `getDieTemplate`, `createDieTemplateSvg`, `defineDie`. |
+| D20 compatibility | `createD20`, `D20*` types, `D20_NET_V1` and `D20View` unchanged; D20 orientations are bit-identical to the original frames (tested). |
+| Shared lifecycle | All types use the same controller: immediate values, `orientTo`, `rollTo`, themes, motion modes, snapshots, subscriptions, abort/replace/dispose cancellation (tested for every type). |
+| Caller-chosen results, validation first | `INVALID_ARGUMENT` before any state change for values outside the type. |
+| Polygon faces | Fan triangulation; internal diagonals are never drawn (tested per type); one label per region, D4 corner kites. |
+| Skins per type | `<type>-grid-v1` templates (SVG + JSON shipped for every built-in type except the D20, which keeps `d20-net-v1`), explicit per-face UV polygons; layouts of other types are rejected and the previous skin stays. |
+| Runtime constraints | WebGL2, no runtime dependencies, SSR-safe imports, idle rendering, 21.0 kB gzip core (200 kB budget unchanged). |
+| React | `<DieView type value …>`; changing `type` disposes the die and creates one new instance; `D20View` unchanged. |
+| Demo | Die-type selector with every preset; see the root README. |
 
-The demo chooses random outcomes from the selected type's documented distribution
-(uniform numeric results; equal probability for the six physical DF faces).
-Percentile display must explain the 00/0 convention. Keep result text accessible
-and ensure controls and die agree after reload. All controls must work on narrow
-screens and with keyboard input.
+## Limitations
 
-## Acceptance and documentation
-
-- Test geometry, outward winding, face frames, numbering, result validation and
-  target orientations for all presets, including repeated and symbolic labels.
-- Test polygon rendering, skin validation, percentile boundaries, DF outcomes,
-  cancellation and disposal, React switching, rapid demo switching and reload.
-- Exercise browser behavior in Chromium, Firefox and WebKit; distinguish automated
-  engine tests from tests on physical Android/iOS devices.
-- Run repository checks and browser tests. Investigate bundle budget regressions;
-  do not silently increase the budget to make checks pass.
-- Update core and React READMEs, architecture, skins documentation, examples and
-  demo screenshots to describe the actual implemented API and limitations.
-- Mark presets as available only after implementation and verification. Document
-  any remaining scope explicitly instead of presenting placeholders as support.
+- The D100 is a single instance with two bodies in one canvas, not two independent dice.
+- High-face-count dice (D60, D120) have small labels; they need a large view (≥ 240 CSS px for
+  the D120) to be read comfortably. The D120 font is uniformly smaller because of three-digit
+  labels.
+- No text font: labels are digits, `+`, `−` or user stroke symbols; letters need a symbol or a skin.
+- Custom geometry is limited to the built-in shapes, prisms and trapezohedra.
+- Coin rims and prism end caps are not in the skin templates and keep the body color.
+- Browser coverage is automated headless Chromium, Firefox and WebKit on macOS (and Linux CI);
+  physical Android/iOS devices have not been tested.

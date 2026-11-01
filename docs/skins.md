@@ -11,6 +11,10 @@ interface D20Skin {
 }
 ```
 
+Dice created with `createDie` take a `DieSkin`, whose `layout` is the die's template id
+(`info.templateId`) or one UV polygon per face; the D20 also accepts everything above. See
+[Templates for every die type](#templates-for-every-die-type).
+
 ## Face vertex convention (A/B/C)
 
 Every face has canonical vertices A, B and C. Seen from outside, with the face turned to the
@@ -112,3 +116,31 @@ deletes the previous GPU texture. The library does not validate the content of t
 The library uploads its own GPU copy. It never modifies or closes your image, canvas or
 `ImageBitmap`, and it does not need the source after a successful upload. Changing the source
 does not update the die — call `setSkin` again. `dispose` releases the library's textures.
+
+## Templates for every die type
+
+Every type except the D20 uses a **grid template** with id `<type>-grid-v1` (custom dice:
+`<id>-grid-v1`). Each face is drawn upright — its label's up direction points to the top of the
+image — and centered in its own cell, in face index order, row by row. Built-in numeric dice
+order faces by value (cell 0 is the face showing 1); DF faces are `+ + blank blank − −`; the
+D100 lists the ten tens faces, then the ten units faces; D4 faces carry three corner labels.
+
+- Files: `dice-3d/templates/<type>-grid-v1.svg` (layers `artwork`, `numbers`, `guides`, like the
+  D20 net) and `.json` (`width`, `height`, `aspectRatio`, and per face `index`, `value`,
+  `label`, `uv` and label positions). Reference width 2048 px; the aspect ratio must match
+  within 1 %.
+- In code: `getDieTemplate(type)` returns the same data (`faces[i].uv`, `faces[i].labels` with
+  `center`, `rotation` in degrees, cell `size` in reference pixels, `glyphScale`, `marker`);
+  `createDieTemplateSvg(type)` returns the SVG, also for custom dice.
+- Explicit layouts: an array with one polygon per face, each listing the face corners in the
+  same order as the template's `uv` (counter-clockwise on screen). Every fan triangle must keep
+  that orientation, so mirrored, folded or degenerate polygons are rejected.
+- Compatibility: a template id of another type (for example `d20-net-v1` on a D6, or
+  `d6-grid-v1` on a DF) is rejected with `INVALID_ARGUMENT` and the previous appearance stays.
+  The record-of-triangles layout is D20-only.
+- Surfaces without results (coin rim, prism end caps) are not in the templates and keep
+  `bodyColor`.
+- `numbers: 'in-texture'` hides the overlay labels; the artwork must then contain them,
+  including the underline of 6/9-style labels (`marker: true` in the template).
+
+Regenerate the shipped files with `npm run templates`; a unit test fails if they drift.

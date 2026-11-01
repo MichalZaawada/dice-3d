@@ -10,24 +10,24 @@ import type { Quat } from '../animation/quaternion.js';
 import { createOrientTrack, createRollTrack, restPose, type Pose, type Track } from '../animation/tracks.js';
 import { D20Error } from '../errors.js';
 import type { DieRenderer, PreparedSkin, ResolvedTheme } from '../renderer/renderer.js';
-import type { AnimationOptions, D20Theme, MotionMode } from '../types.js';
+import type { AnimationOptions, D20Theme, DieValue, MotionMode } from '../types.js';
 import type { DieEnvironment } from './environment.js';
 import { assertMotionMode, mergeTheme, validateAnimationOptions } from './validation.js';
 
 export type DieState = 'idle' | 'animating' | 'disposed';
 
-export interface DieSnapshot<V extends number> {
+export interface DieSnapshot<V extends DieValue> {
   readonly state: DieState;
   readonly value: V;
   readonly target: V | null;
 }
 
-export type DieAnimationResult<V extends number> =
+export type DieAnimationResult<V extends DieValue> =
   | { readonly status: 'completed'; readonly value: V }
   | { readonly status: 'cancelled'; readonly reason: 'replaced' | 'aborted' | 'disposed' };
 
 /** Die-independent controller API; `D20` is this interface with `V = D20Value`. */
-export interface DieController<V extends number> {
+export interface DieController<V extends DieValue> {
   orientTo(value: V, options?: AnimationOptions): Promise<DieAnimationResult<V>>;
   rollTo(value: V, options?: AnimationOptions): Promise<DieAnimationResult<V>>;
   setValue(value: V): void;
@@ -47,44 +47,52 @@ export interface DieControllerInternals {
   fail(error: unknown): void;
 }
 
-export interface DieControllerConfig<V extends number> {
+export interface DieControllerConfig<V extends DieValue> {
   readonly initialValue: V;
   readonly motion: MotionMode;
   readonly theme: ResolvedTheme;
   readonly renderer: DieRenderer;
   readonly environment: DieEnvironment;
-  readonly orientationOf: (value: V) => Quat;
+  /**
+   * Target rotation of every body for a value. Values with several physical
+   * faces resolve to the pose closest to `current` (empty before the first pose).
+   */
+  readonly orientationsOf: (value: V, current: readonly Quat[]) => readonly Quat[];
   readonly validateValue: (value: unknown) => V;
   readonly prepareSkin: (skin: unknown) => PreparedSkin;
   /** Called once during disposal, before GPU resources are released. */
   readonly onTeardown?: () => void;
 }
 
-type Listener<V extends number> = (snapshot: Readonly<DieSnapshot<V>>) => void;
+type Listener<V extends DieValue> = (snapshot: Readonly<DieSnapshot<V>>) => void;
 
-interface Operation<V extends number> {
+interface Operation<V extends DieValue> {
   readonly target: V;
+  readonly rotations: readonly Quat[];
   settled: boolean;
   resolve(result: DieAnimationResult<V>): void;
   reject(error: unknown): void;
   detachSignal?: () => void;
 }
 
-interface ActiveAnimation<V extends number> {
+interface ActiveAnimation<V extends DieValue> {
   readonly operation: Operation<V>;
-  track: Track;
+  /** One track per body; all share kind and duration. */
+  tracks: Track[];
 }
 
-export function createDieController<V extends number>(
+export function createDieController<V extends DieValue>(
   config: DieControllerConfig<V>,
 ): DieController<V> & DieControllerInternals {
-  const { renderer, environment, orientationOf } = config;
+  const { renderer, environment, orientationsOf } = config;
   const { scheduler } = environment;
   const clock = new AnimationClock(() => scheduler.now());
   const listeners = new Set<Listener<V>>();
 
   let snapshot: Readonly<DieSnapshot<V>> = Object.freeze({ state: 'idle', value: config.initialValue, target: null });
-  let pose: Pose = restPose(orientationOf(config.initialValue));
+  /** Rest rotations of the last completed value. */
+  let rest: readonly Quat[] = orientationsOf(config.initialValue, []);
+  let poses: readonly Pose[] = rest.map(restPose);
   let theme = config.theme;
   let motionMode = config.motion;
   let active: ActiveAnimation<V> | null = null;
@@ -118,7 +126,16 @@ export function createDieController<V extends number>(
   }
 
   function draw(): void {
-    if (renderer.canRender()) renderer.render(pose);
+    if (renderer.canRender()) renderer.render(poses);
+  }
+
+  function rotations(): readonly Quat[] {
+    return poses.map((pose) => pose.rotation);
+  }
+
+  function settleAt(next: readonly Quat[]): void {
+    rest = next;
+    poses = next.map(restPose);
   }
 
   function drawOrReport(): void {
@@ -154,11 +171,11 @@ export function createDieController<V extends number>(
     frameHandle = null;
     if (!active) return;
     const elapsed = clock.tick();
-    if (elapsed >= active.track.durationMs) {
+    if (elapsed >= (active.tracks[0]?.durationMs ?? 0)) {
       completeActive();
       return;
     }
-    pose = active.track.sample(elapsed);
+    poses = active.tracks.map((track) => track.sample(elapsed));
     try {
       draw();
     } catch (error) {
@@ -174,7 +191,7 @@ export function createDieController<V extends number>(
     active = null;
     stopFrames();
     const value = current.operation.target;
-    pose = restPose(orientationOf(value));
+    settleAt(current.operation.rotations);
     drawOrReport();
     publish({ state: 'idle', value, target: null });
     settle(current.operation, { result: { status: 'completed', value } });
@@ -187,7 +204,7 @@ export function createDieController<V extends number>(
     active = null;
     stopFrames();
     if (restore) {
-      pose = restPose(orientationOf(snapshot.value));
+      poses = rest.map(restPose);
       drawOrReport();
       publish({ state: 'idle', value: snapshot.value, target: null });
     }
@@ -202,7 +219,7 @@ export function createDieController<V extends number>(
     const current = active;
     active = null;
     stopFrames();
-    pose = restPose(orientationOf(snapshot.value));
+    poses = rest.map(restPose);
     publish({ state: 'idle', value: snapshot.value, target: null });
     if (current) settle(current.operation, { error });
   }
@@ -226,13 +243,16 @@ export function createDieController<V extends number>(
     }
     if (motion === 'reduced') {
       const elapsed = clock.tick();
-      const remaining = Math.max(0, active.track.durationMs - elapsed);
-      if (active.track.kind === 'roll' || remaining > REDUCED_MOTION_MAX_MS) {
-        pose = active.track.sample(elapsed);
-        active.track = createOrientTrack(pose, active.track.target, Math.min(remaining, REDUCED_MOTION_MAX_MS));
+      const first = active.tracks[0];
+      if (!first) return;
+      const remaining = Math.max(0, first.durationMs - elapsed);
+      if (first.kind === 'roll' || remaining > REDUCED_MOTION_MAX_MS) {
+        poses = active.tracks.map((track) => track.sample(elapsed));
+        const duration = Math.min(remaining, REDUCED_MOTION_MAX_MS);
+        active.tracks = active.tracks.map((track, index) => createOrientTrack(poses[index]!, track.target, duration));
         clock.start();
         if (environment.isHidden()) clock.pause();
-        if (active.track.durationMs === 0) completeActive();
+        if (duration === 0) completeActive();
       }
     }
   }
@@ -249,25 +269,28 @@ export function createDieController<V extends number>(
     const motion = effectiveMotion();
     const requested = durationMs ?? (kind === 'orient' ? DEFAULT_ORIENT_DURATION_MS : DEFAULT_ROLL_DURATION_MS);
     const duration = motion === 'none' ? 0 : motion === 'reduced' ? Math.min(requested, REDUCED_MOTION_MAX_MS) : requested;
-    const target = orientationOf(value);
+    const targets = orientationsOf(value, rotations());
 
     return new Promise<DieAnimationResult<V>>((resolve, reject) => {
-      const operation: Operation<V> = { target: value, settled: false, resolve, reject };
+      const operation: Operation<V> = { target: value, rotations: targets, settled: false, resolve, reject };
       cancelActive('replaced', false);
 
       if (duration === 0) {
-        pose = restPose(target);
+        settleAt(targets);
         drawOrReport();
         publish({ state: 'idle', value, target: null });
         settle(operation, { result: { status: 'completed', value } });
         return;
       }
 
-      const track =
-        kind === 'roll' && motion === 'full'
-          ? createRollTrack(pose, target, duration, { variant: rollVariant++ })
-          : createOrientTrack(pose, target, duration);
-      active = { operation, track };
+      const variant = rollVariant++;
+      const tracks = targets.map((target, index) => {
+        const from = poses[index] ?? restPose(target);
+        return kind === 'roll' && motion === 'full'
+          ? createRollTrack(from, target, duration, { variant: variant + index * 7 })
+          : createOrientTrack(from, target, duration);
+      });
+      active = { operation, tracks };
 
       if (signal) {
         const onAbort = () => {
@@ -317,8 +340,9 @@ export function createDieController<V extends number>(
     setValue(rawValue) {
       assertUsable();
       const value = config.validateValue(rawValue);
+      const targets = orientationsOf(value, rotations());
       cancelActive('replaced', false);
-      pose = restPose(orientationOf(value));
+      settleAt(targets);
       draw();
       publish({ state: 'idle', value, target: null });
     },
