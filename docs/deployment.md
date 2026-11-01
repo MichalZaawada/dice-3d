@@ -45,17 +45,19 @@ Only `bootstrap` exposes the secret, and only to the final publication step.
 
 ### First release: 0.0.1
 
-1. Create an npm account, verify its email and enable 2FA. Verify package names
+1. Create the npm account (or organization) `ticonemarsicano`, which owns the
+   `@ticonemarsicano` scope, verify its email and enable 2FA. Verify package names
    and repository metadata, and review the release checklist.
 2. In GitHub Settings → Environments → `npm`, add a short-lived granular npm
-   token with write permission to create both new packages as secret `NPM_TOKEN`.
+   token with write permission to create packages in the `@ticonemarsicano` scope
+   as secret `NPM_TOKEN`.
    A stage-only token is sufficient. Do not put the token in the repository.
 3. In the same environment, add variable `NPM_PUBLISH_MODE` = `bootstrap`.
 4. Merge the release changes to `main`, including both versions `0.0.1`, then push
    tag `v0.0.1`. Creating a GitHub Release with that new tag also triggers the workflow.
 5. After staging succeeds, open npmjs.com → Staged Packages, inspect and approve
-   `dice-3d@0.0.1`, then `dice-3d-react@0.0.1`, with 2FA. A green staging job means
-   uploaded for review, not publicly released. npm initially creates a public
+   `@ticonemarsicano/dice-3d@0.0.1`, then `@ticonemarsicano/dice-3d-react@0.0.1`,
+   with 2FA. A green staging job means uploaded for review, not publicly released. npm initially creates a public
    `0.0.0-stage` placeholder; the real staged contents remain private until approval.
 
 No local npm login or publish is required for this bootstrap.

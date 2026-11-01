@@ -1,8 +1,8 @@
 import { act, cleanup, render } from '@testing-library/react';
 import { createRef, StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { D20, D20Options, D20Snapshot, D20Value } from 'dice-3d';
-import { D20Error } from 'dice-3d';
+import type { D20, D20Options, D20Snapshot, D20Value } from '@ticonemarsicano/dice-3d';
+import { D20Error } from '@ticonemarsicano/dice-3d';
 import { D20View, type D20ViewHandle } from '../src/index.js';
 
 interface FakeDie extends D20 {
@@ -15,8 +15,8 @@ interface FakeDie extends D20 {
 const created: FakeDie[] = [];
 let createError: unknown = null;
 
-vi.mock('dice-3d', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('dice-3d')>();
+vi.mock('@ticonemarsicano/dice-3d', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@ticonemarsicano/dice-3d')>();
   return {
     ...actual,
     createD20: vi.fn((container: HTMLElement, options?: D20Options) => {

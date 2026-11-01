@@ -3,8 +3,8 @@ import { expectHue, openFixture, samplePixels } from './helpers';
 
 declare global {
   interface Window {
-    dice: typeof import('dice-3d');
-    die?: import('dice-3d').D20;
+    dice: typeof import('@ticonemarsicano/dice-3d');
+    die?: import('@ticonemarsicano/dice-3d').D20;
     testSkins: {
       createColumnSkin(): { canvas: HTMLCanvasElement; layout: Record<number, unknown> };
       createNetSkin(width?: number): HTMLCanvasElement;

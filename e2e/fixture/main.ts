@@ -1,6 +1,6 @@
 // Test-only page: exposes the public package API and texture helpers to Playwright.
-import * as dice from 'dice-3d';
-import type { D20Value, FaceUV } from 'dice-3d';
+import * as dice from '@ticonemarsicano/dice-3d';
+import type { D20Value, FaceUV } from '@ticonemarsicano/dice-3d';
 
 /** Hue (degrees) that identifies a value in the test skins. */
 export const valueHue = (value: number): number => (value - 1) * 18;

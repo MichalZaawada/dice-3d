@@ -2,7 +2,7 @@
 // Browsers cap the number of live WebGL contexts (about 16 in Chromium), so face sheets are captured
 // from a single die per theme: each `setValue` renders synchronously, and drawing the WebGL canvas
 // in the same task copies that frame.
-import { createD20, createDie, D20_NET_V1, D20_VALUES, DIE_TYPES, getDieInfo, type D20, type D20Value } from 'dice-3d';
+import { createD20, createDie, D20_NET_V1, D20_VALUES, DIE_TYPES, getDieInfo, type D20, type D20Value } from '@ticonemarsicano/dice-3d';
 
 function figure(sectionId: string, label: string, className = 'die'): HTMLElement {
   const item = document.createElement('figure');

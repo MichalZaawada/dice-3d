@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
-import { DIE_TYPES, getDieInfo, isD20Error, type D20Theme, type DieInfo, type DieType, type DieValue, type MotionMode } from 'dice-3d';
-import { DieView, type DieViewHandle } from 'dice-3d-react';
+import { DIE_TYPES, getDieInfo, isD20Error, type D20Theme, type DieInfo, type DieType, type DieValue, type MotionMode } from '@ticonemarsicano/dice-3d';
+import { DieView, type DieViewHandle } from '@ticonemarsicano/dice-3d-react';
 
 const THEMES: Record<string, Partial<D20Theme>> = {
   ivory: {},

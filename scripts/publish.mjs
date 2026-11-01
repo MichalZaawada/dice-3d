@@ -16,7 +16,7 @@ const tag = process.env.RELEASE_TAG;
 if (!/^\d+\.\d+\.\d+$/.test(version) || tag !== `v${version}` || packages[1].version !== version) {
   throw new Error('Use a stable vX.Y.Z tag matching both package versions.');
 }
-if (packages[1].dependencies['dice-3d'] !== `^${version}`) {
+if (packages[1].dependencies?.[packages[0].name] !== `^${version}`) {
   throw new Error('The React adapter must depend on the released core version (^X.Y.Z).');
 }
 console.log(`Validated ${tag}: ${packages.map((pkg) => pkg.name).join(', ')}`);
@@ -52,12 +52,15 @@ if (!process.argv.includes('--check')) {
         stdio: 'inherit',
       });
     } catch (error) {
-      if (staged) console.error('If this version is already staged, approve or reject it on npm before retrying; staged versions cannot be overwritten.');
+      if (staged) {
+        console.error('If this version is already staged, approve or reject it on npm before retrying; staged versions cannot be overwritten.');
+        console.error('A generic E400 on a first release can also mean npm rejected the package name (e.g. too similar to an existing package).');
+      }
       throw error;
     }
   }
   const summary = staged
-    ? 'Staging finished. Approve dice-3d first, then dice-3d-react in npm Staged Packages with 2FA. Already published versions were skipped.'
+    ? `Staging finished. Approve ${packages[0].name} first, then ${packages[1].name} in npm Staged Packages with 2FA. Already published versions were skipped.`
     : 'Publishing finished. Already published versions were skipped.';
   console.log(summary);
   if (process.env.GITHUB_STEP_SUMMARY) {

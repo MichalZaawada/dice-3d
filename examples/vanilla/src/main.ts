@@ -13,9 +13,9 @@ import {
   type DieType,
   type DieValue,
   type MotionMode,
-} from 'dice-3d';
-import templateSvgUrl from 'dice-3d/templates/d20-net-v1.svg?url';
-import templateJsonUrl from 'dice-3d/templates/d20-net-v1.json?url';
+} from '@ticonemarsicano/dice-3d';
+import templateSvgUrl from '@ticonemarsicano/dice-3d/templates/d20-net-v1.svg?url';
+import templateJsonUrl from '@ticonemarsicano/dice-3d/templates/d20-net-v1.json?url';
 import { createCustomAtlas, createTemplateArtwork } from './skins';
 
 const $ = <T extends HTMLElement>(selector: string) => {

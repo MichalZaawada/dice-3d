@@ -7,7 +7,7 @@ import {
   type DieType,
   type DieValueOf,
   type MotionMode,
-} from 'dice-3d';
+} from '@ticonemarsicano/dice-3d';
 import { useDieView, type DieLike, type DieViewHandleBase } from './useDieView.js';
 
 export interface DieViewProps<T extends DieType | CustomDieDefinition = DieType | CustomDieDefinition> {

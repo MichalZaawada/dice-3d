@@ -14,12 +14,12 @@ D14, D16, D24, D30, D48, D60, D120), Fudge/Fate (DF) and your own custom dice.
 `createD20` is the original D20 API and is unchanged. `createDie` creates any type with the
 same lifecycle. The full support matrix is in [dice support](../../docs/dice-support.md).
 
-React users: see [`dice-3d-react`](../react/README.md).
+React users: see [`@ticonemarsicano/dice-3d-react`](../react/README.md).
 
 ## Installation
 
 ```sh
-npm install dice-3d
+npm install @ticonemarsicano/dice-3d
 ```
 
 The package is ESM-only and ships TypeScript declarations.
@@ -32,7 +32,7 @@ The package is ESM-only and ships TypeScript declarations.
 ```
 
 ```ts
-import { createD20, type D20 } from 'dice-3d';
+import { createD20, type D20 } from '@ticonemarsicano/dice-3d';
 
 const host = document.querySelector<HTMLElement>('#dice');
 const output = document.querySelector<HTMLOutputElement>('#result');
@@ -57,7 +57,7 @@ The container decides the size through CSS. The library appends one `<canvas>` t
 ### Any die type
 
 ```ts
-import { createDie, getDieInfo } from 'dice-3d';
+import { createDie, getDieInfo } from '@ticonemarsicano/dice-3d';
 
 const die = createDie(host, { type: 'd100', value: 100, motion: 'system' });
 const info = die.info; // same object as getDieInfo('d100')
@@ -149,7 +149,7 @@ Other exports: `D20Error` (alias `DieError`), `isD20Error` (alias `isDieError`),
 ### Custom dice
 
 ```ts
-import { createDie, defineDie } from 'dice-3d';
+import { createDie, defineDie } from '@ticonemarsicano/dice-3d';
 
 const hits = defineDie({
   id: 'hit-die',
@@ -232,8 +232,8 @@ die.setSkin(null); // back to the default appearance
   never fetches files and never closes or modifies your source. It keeps its own GPU copy, so
   later changes to the source require another `setSkin` call.
 - `layout: 'd20-net-v1'`: an image painted on the official template. Templates ship with the
-  package: `dice-3d/templates/d20-net-v1.svg` (layers `artwork`, `numbers`, `guides`) and
-  `dice-3d/templates/d20-net-v1.json` (UVs). The image must have a 2:1 aspect ratio (±1 %);
+  package: `@ticonemarsicano/dice-3d/templates/d20-net-v1.svg` (layers `artwork`, `numbers`, `guides`) and
+  `@ticonemarsicano/dice-3d/templates/d20-net-v1.json` (UVs). The image must have a 2:1 aspect ratio (±1 %);
   2048 × 1024 is recommended. Hide the guides before exporting and paint into the bleed area.
 - Custom `layout`: `{ 1: [A, B, C], …, 20: [A, B, C] }` with normalized `[u, v]` points, where
   `(0, 0)` is the top-left of the image. Seen from outside with the face upright, A is the top
@@ -249,7 +249,7 @@ Every type has its own grid template: each face upright in its own cell, in face
 (built-in numeric dice: face i shows i + 1). Pass the type's `info.templateId`, e.g.
 `{ source, layout: 'd6-grid-v1' }`, or an explicit array with one UV polygon per face
 (polygon corners in the order of `getDieTemplate(type).faces[i].uv`, counter-clockwise on
-screen). Templates ship as `dice-3d/templates/<type>-grid-v1.svg` and `.json` for every
+screen). Templates ship as `@ticonemarsicano/dice-3d/templates/<type>-grid-v1.svg` and `.json` for every
 built-in type except the D20 (which keeps `d20-net-v1`); custom dice get theirs from
 `getDieTemplate`/`createDieTemplateSvg`. A layout made for another type — including
 `d20-net-v1` on a non-D20 — is rejected and the previous skin stays. Coin rims and prism end

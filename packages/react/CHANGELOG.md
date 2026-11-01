@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- `<DieView type value …>` for every `dice-3d` die type and custom definitions; changing
+- `<DieView type value …>` for every `@ticonemarsicano/dice-3d` die type and custom definitions; changing
   `type` disposes the die and creates one new instance. `<D20View>` is unchanged (both share
   one implementation).
 

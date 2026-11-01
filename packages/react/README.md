@@ -1,17 +1,17 @@
 # dice-3d-react
 
-React adapter for [`dice-3d`](../core/README.md): `<DieView>` for every die type and the
+React adapter for [`@ticonemarsicano/dice-3d`](../core/README.md): `<DieView>` for every die type and the
 original `<D20View>`. React 18 or 19 is a
 peer dependency; the adapter adds no animation logic of its own.
 
 ```sh
-npm install dice-3d dice-3d-react
+npm install @ticonemarsicano/dice-3d @ticonemarsicano/dice-3d-react
 ```
 
 ```tsx
 import { useRef, useState } from 'react';
-import type { D20Value } from 'dice-3d';
-import { D20View, type D20ViewHandle } from 'dice-3d-react';
+import type { D20Value } from '@ticonemarsicano/dice-3d';
+import { D20View, type D20ViewHandle } from '@ticonemarsicano/dice-3d-react';
 
 export function DiceRoller() {
   const die = useRef<D20ViewHandle>(null);
@@ -38,8 +38,8 @@ export function DiceRoller() {
 
 ```tsx
 import { useState } from 'react';
-import { getDieInfo, type DieType, type DieValue } from 'dice-3d';
-import { DieView } from 'dice-3d-react';
+import { getDieInfo, type DieType, type DieValue } from '@ticonemarsicano/dice-3d';
+import { DieView } from '@ticonemarsicano/dice-3d-react';
 
 export function AnyDie() {
   const [type, setType] = useState<DieType>('d6');

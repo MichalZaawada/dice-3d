@@ -11,8 +11,8 @@ function run({ mode = 'publish', token = '', tag = 'v0.0.1', registry = {}, chec
   try {
     for (const dir of ['scripts', 'bin', 'packages/core', 'packages/react']) mkdirSync(join(root, dir), { recursive: true });
     copyFileSync(new URL('./publish.mjs', import.meta.url), join(root, 'scripts/publish.mjs'));
-    for (const [dir, name] of [['core', 'dice-3d'], ['react', 'dice-3d-react']]) {
-      writeFileSync(join(root, `packages/${dir}/package.json`), JSON.stringify({ name, version: '0.0.1', dependencies: { 'dice-3d': '^0.0.1' } }));
+    for (const [dir, name] of [['core', '@ticonemarsicano/dice-3d'], ['react', '@ticonemarsicano/dice-3d-react']]) {
+      writeFileSync(join(root, `packages/${dir}/package.json`), JSON.stringify({ name, version: '0.0.1', dependencies: { '@ticonemarsicano/dice-3d': '^0.0.1' } }));
     }
     const log = join(root, 'calls');
     writeFileSync(log, '');
@@ -55,18 +55,18 @@ for (const mode of ['publish', 'bootstrap', 'stage']) {
   });
 }
 test('registry failure in either package prevents all writes', () => {
-  const result = run({ registry: { 'dice-3d-react@0.0.1': 'E503' } });
+  const result = run({ registry: { '@ticonemarsicano/dice-3d-react@0.0.1': 'E503' } });
   assert.notEqual(result.status, 0);
   assert.equal(result.writes.length, 0);
 });
 test('retry skips published core and publishes only adapter', () => {
-  const result = run({ registry: { 'dice-3d@0.0.1': 'published' } });
+  const result = run({ registry: { '@ticonemarsicano/dice-3d@0.0.1': 'published' } });
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.writes.length, 1);
   assert.ok(result.writes[0].cwd.endsWith('/packages/react'));
 });
 test('npm 12 version arrays skip published packages on retry', () => {
-  const result = run({ registry: { 'dice-3d@0.0.1': 'published-array', 'dice-3d-react@0.0.1': 'published-array' } });
+  const result = run({ registry: { '@ticonemarsicano/dice-3d@0.0.1': 'published-array', '@ticonemarsicano/dice-3d-react@0.0.1': 'published-array' } });
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.writes.length, 0);
 });

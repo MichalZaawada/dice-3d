@@ -8,7 +8,7 @@ import {
   type D20Theme,
   type D20Value,
   type MotionMode,
-} from 'dice-3d';
+} from '@ticonemarsicano/dice-3d';
 import { useDieView, type DieLike, type DieViewHandleBase } from './useDieView.js';
 
 export interface D20ViewProps {

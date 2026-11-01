@@ -20,7 +20,7 @@ export default tseslint.config(
     // and browser globals are only touched inside functions (enforced by the SSR test).
     files: ['packages/core/src/**/*.ts'],
     rules: {
-      'no-restricted-imports': ['error', { patterns: ['react', 'react-*', 'dice-3d-react'] }],
+      'no-restricted-imports': ['error', { patterns: ['react', 'react-*', '@ticonemarsicano/dice-3d-react'] }],
       'no-restricted-syntax': [
         'error',
         { selector: 'ImportDeclaration[source.value=/^[^.]/]', message: 'The core has no runtime dependencies.' },

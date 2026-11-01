@@ -25,8 +25,8 @@ function assert(condition, message) {
 }
 
 try {
-  const core = pack('dice-3d');
-  const react = pack('dice-3d-react');
+  const core = pack('@ticonemarsicano/dice-3d');
+  const react = pack('@ticonemarsicano/dice-3d-react');
   for (const [info, required] of [
     [core, ['package.json', 'README.md', 'LICENSE', 'CHANGELOG.md', 'dist/index.js', 'dist/index.d.ts', 'templates/d20-net-v1.svg', 'templates/d20-net-v1.json', 'templates/d6-grid-v1.svg', 'templates/d100-grid-v1.json', 'templates/df-grid-v1.svg']],
     [react, ['package.json', 'README.md', 'LICENSE', 'CHANGELOG.md', 'dist/index.js', 'dist/index.d.ts']],
@@ -52,9 +52,9 @@ try {
 
   writeFileSync(
     join(consumer, 'src', 'usage.tsx'),
-    `import { createD20, D20Error, D20_NET_V1, isD20Error, type AnimationResult, type D20, type D20Skin, type D20Value } from 'dice-3d';
-import { createDie, defineDie, getDieInfo, type Die, type DieValueOf } from 'dice-3d';
-import { D20View, DieView, type D20ViewHandle, type DieViewHandle } from 'dice-3d-react';
+    `import { createD20, D20Error, D20_NET_V1, isD20Error, type AnimationResult, type D20, type D20Skin, type D20Value } from '@ticonemarsicano/dice-3d';
+import { createDie, defineDie, getDieInfo, type Die, type DieValueOf } from '@ticonemarsicano/dice-3d';
+import { D20View, DieView, type D20ViewHandle, type DieViewHandle } from '@ticonemarsicano/dice-3d-react';
 import { createRef } from 'react';
 
 export function mountAny(host: HTMLElement): Die<DieValueOf<'d100'>> {
@@ -127,8 +127,8 @@ export const element = <D20View ref={handle} value={5} motion="reduced" classNam
 import { fileURLToPath } from 'node:url';
 import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
-const core = await import('dice-3d');
-const { D20View } = await import('dice-3d-react');
+const core = await import('@ticonemarsicano/dice-3d');
+const { D20View } = await import('@ticonemarsicano/dice-3d-react');
 if (typeof globalThis.window !== 'undefined') throw new Error('window must not exist in this test');
 const html = renderToString(createElement(D20View, { value: 7, className: 'dice' }));
 if (html !== '<div class="dice" data-dice-3d-view=""></div>') throw new Error('Unexpected SSR output: ' + html);
@@ -138,10 +138,10 @@ try {
 } catch (error) {
   if (error.code !== 'WEBGL_UNAVAILABLE') throw error;
 }
-const template = JSON.parse(readFileSync(fileURLToPath(import.meta.resolve('dice-3d/templates/d20-net-v1.json')), 'utf8'));
+const template = JSON.parse(readFileSync(fileURLToPath(import.meta.resolve('@ticonemarsicano/dice-3d/templates/d20-net-v1.json')), 'utf8'));
 if (JSON.stringify(template.faces['20']) !== JSON.stringify(core.D20_NET_V1.faces[20])) throw new Error('Template mismatch');
-readFileSync(fileURLToPath(import.meta.resolve('dice-3d/templates/d20-net-v1.svg')), 'utf8');
-const grid = JSON.parse(readFileSync(fileURLToPath(import.meta.resolve('dice-3d/templates/d6-grid-v1.json')), 'utf8'));
+readFileSync(fileURLToPath(import.meta.resolve('@ticonemarsicano/dice-3d/templates/d20-net-v1.svg')), 'utf8');
+const grid = JSON.parse(readFileSync(fileURLToPath(import.meta.resolve('@ticonemarsicano/dice-3d/templates/d6-grid-v1.json')), 'utf8'));
 if (JSON.stringify(grid.faces[0].uv) !== JSON.stringify(core.getDieTemplate('d6').faces[0].uv)) throw new Error('Grid template mismatch');
 try {
   core.createDie({}, { type: 'd6' });
@@ -150,7 +150,7 @@ try {
   if (error.code !== 'WEBGL_UNAVAILABLE') throw error;
 }
 try {
-  await import('dice-3d/dist/controller/createD20.js');
+  await import('@ticonemarsicano/dice-3d/dist/controller/createD20.js');
   throw new Error('Internal files must not be importable');
 } catch (error) {
   if (error.code !== 'ERR_PACKAGE_PATH_NOT_EXPORTED') throw error;
@@ -159,7 +159,7 @@ console.log('Node SSR import: ok');
 `,
   );
   process.stdout.write(run('node', ['ssr.mjs'], consumer));
-  const installed = JSON.parse(readFileSync(join(consumer, 'node_modules', 'dice-3d', 'package.json'), 'utf8'));
+  const installed = JSON.parse(readFileSync(join(consumer, 'node_modules', '@ticonemarsicano/dice-3d', 'package.json'), 'utf8'));
   assert(!installed.dependencies, 'dice-3d must not have runtime dependencies');
   console.log(`verify-pack: ok (${keep ? `kept ${work}` : 'temporary project removed'})`);
 } finally {

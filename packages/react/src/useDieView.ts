@@ -8,7 +8,7 @@ import {
   type DieSnapshot,
   type DieValue,
   type MotionMode,
-} from 'dice-3d';
+} from '@ticonemarsicano/dice-3d';
 
 /** Props shared by `D20View` and `DieView`. */
 export interface DieViewBaseProps<V extends DieValue, S> {
