@@ -2,6 +2,14 @@
 
 [**Try the live demo on GitHub Pages →**](https://michalzaawada.github.io/dice-3d/)
 
+Jade die with the dark background:
+
+[![Demo with a jade D20, dark background and live controls](docs/images/demo-dark.png)](https://michalzaawada.github.io/dice-3d/)
+
+Custom UV artwork with baked numbers and the light background:
+
+[![Demo with a custom textured D20, light background and live controls](docs/images/demo-custom-texture.png)](https://michalzaawada.github.io/dice-3d/)
+
 Independent TypeScript library for 3D dice on the web. This directory is a self-contained
 npm-workspaces project with its own dependencies, build, tests and documentation; it has no
 dependency on any host application and can be moved to its own repository as-is.
@@ -67,16 +75,6 @@ scripts/                   template generation, size and pack verification
 
 [Open the live playground on GitHub Pages](https://michalzaawada.github.io/dice-3d/)
 to roll the die and explore materials, textures and motion controls.
-
-### Screenshots
-
-Jade die with the dark background:
-
-[![Demo with a jade D20, dark background and live controls](docs/images/demo-dark.png)](https://michalzaawada.github.io/dice-3d/)
-
-Custom UV artwork with baked numbers and the light background:
-
-[![Demo with a custom textured D20, light background and live controls](docs/images/demo-custom-texture.png)](https://michalzaawada.github.io/dice-3d/)
 
 ### Run locally
 
