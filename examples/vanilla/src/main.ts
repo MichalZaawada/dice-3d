@@ -13,6 +13,7 @@ const host = $<HTMLDivElement>('#dice');
 const output = $<HTMLOutputElement>('#result');
 const errorBox = $<HTMLParagraphElement>('#error');
 const valueSelect = $<HTMLSelectElement>('#value');
+const controls = $<HTMLFormElement>('#controls');
 $<HTMLAnchorElement>('#template-svg').href = templateSvgUrl;
 $<HTMLAnchorElement>('#template-json').href = templateJsonUrl;
 
@@ -23,6 +24,12 @@ const themes: Record<string, Partial<D20Theme>> = {
 };
 
 for (const value of D20_VALUES) valueSelect.add(new Option(String(value), String(value), value === 20, value === 20));
+
+// Browsers can restore form values independently of the newly created die.
+controls.reset();
+window.addEventListener('pageshow', (event) => {
+  if (!event.persisted) controls.reset();
+});
 
 function showError(error: unknown): void {
   errorBox.hidden = false;

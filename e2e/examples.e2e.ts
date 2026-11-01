@@ -25,6 +25,32 @@ test('vanilla example renders, rolls and swaps skins', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test('vanilla reload resets restored controls along with the die', async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.goto('/examples/vanilla/index.html');
+  await page.selectOption('#motion', 'none');
+  await page.selectOption('#value', '6');
+  await page.selectOption('#theme', 'ivory');
+  await page.selectOption('#skin', 'custom');
+  await page.selectOption('#numbers', 'overlay');
+  await page.selectOption('#size', '320');
+  await page.uncheck('#dark');
+  await page.reload();
+  for (const [id, value] of Object.entries({
+    motion: 'system', value: '20', theme: 'jade', skin: 'default',
+    numbers: 'in-texture', size: '160',
+  })) {
+    await expect(page.locator(`#${id}`)).toHaveValue(value);
+  }
+  await expect(page.locator('#dark')).toBeChecked();
+  await expect(page.locator('body')).toHaveClass('dark');
+  await expect(page.locator('#result')).toHaveText('20');
+  await expect(page.locator('#dice canvas')).toHaveJSProperty('clientWidth', 160);
+  await expect(page.locator('#upload')).toHaveValue('');
+  await expect(page.locator('#error')).toBeHidden();
+  expect(errors).toEqual([]);
+});
+
 test('react example renders the adapter and rolls through the ref', async ({ page }) => {
   const errors = collectErrors(page);
   await page.goto('/examples/react/index.html');
