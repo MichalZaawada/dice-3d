@@ -1,0 +1,34 @@
+{
+  "name": "dice-3d",
+  "version": "0.1.0",
+  "description": "Framework-agnostic 3D dice for the web (WebGL2). The first supported die is the D20.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "keywords": ["dice", "d20", "webgl2", "3d", "animation"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./templates/*": "./templates/*",
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "!dist/**/*.tsbuildinfo",
+    "templates",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "node ../../scripts/clean.mjs dist && tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}

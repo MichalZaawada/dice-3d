@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>dice-3d visual review</title>
+    <style>
+      body { margin: 0; font-family: system-ui, sans-serif; font-size: 12px; }
+      section { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; align-items: flex-end; }
+      section.light { background: #f7f5f0; color: #222; }
+      section.dark { background: #15171c; color: #eee; }
+      figure { margin: 0; text-align: center; }
+      .die { width: 96px; height: 96px; }
+      .s160 { width: 160px; height: 160px; }
+      .s320 { width: 320px; height: 320px; }
+      .capture { width: 96px; height: 96px; }
+    </style>
+  </head>
+  <body>
+    <section class="light" id="faces-light"></section>
+    <section class="dark" id="faces-dark"></section>
+    <section class="light" id="sizes-light"></section>
+    <section class="dark" id="sizes-dark"></section>
+    <section class="light" id="skins"></section>
+    <div id="staging"></div>
+    <script type="module" src="./review.ts"></script>
+  </body>
+</html>
