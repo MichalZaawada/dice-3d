@@ -3,7 +3,7 @@
 All notable changes follow [Semantic Versioning](https://semver.org/). Before 1.0, contract
 changes include migration notes.
 
-## 0.1.0 — unreleased
+## 0.0.1 — 2026-11-01
 
 Initial MVP.
 

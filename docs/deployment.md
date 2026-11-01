@@ -18,21 +18,51 @@ Actions**. Deployment is serialized to avoid interrupting an in-progress publish
 
 ## Packages: npm
 
-`npm.yml` runs when a `v*` tag is pushed. It can also be rerun manually by
-selecting the release tag in the Actions UI. Branch runs skip publication.
-Only stable `vX.Y.Z` tags matching both package versions are accepted, and the
-release commit must be an ancestor of `main`. The React dependency must match
-`^X.Y.Z`. Pre-release publishing is intentionally not supported yet.
+The release workflow runs on a pushed `v*` tag, or Actions → Publish npm packages
+→ Run workflow with a release tag selected. Branch runs do not publish. Stable
+`vX.Y.Z` must match both package versions and the React core dependency `^X.Y.Z`.
+The release commit must be reachable from `main`. Prereleases are not supported.
 
-After the same quality checks, packages are rebuilt from the tag and published
-publicly with provenance, core first. Publishing uses npm trusted publishing
-(OIDC) on GitHub-hosted runners; no `NPM_TOKEN` secret is used. The `npm`
-environment can have required reviewers configured in GitHub Settings.
+Quality checks (including Chromium, Firefox and WebKit) must pass before the
+release job starts. The job uses a fresh GitHub-hosted Ubuntu runner, Node from
+`.nvmrc`, pinned npm 12.2.1, no dependency cache, and read-only repository access.
+Only the release job receives `id-token: write`; checkout does not persist credentials.
+It rebuilds and verifies the packed packages before sending core, then React,
+to npm with provenance. Actions are pinned to commit SHAs.
 
-### One-time npm setup
+### Publication modes
 
-The pipeline does not create an npm account or configure package ownership.
-For each package, configure its trusted publisher on npm:
+| Mode | Authentication | Result |
+| --- | --- | --- |
+| `publish` (default) | Trusted Publishing / OIDC | Public immediately after checks |
+| `bootstrap` | npm environment secret `NPM_TOKEN` | Staged; maintainer approves with 2FA |
+| `stage` | Trusted Publishing / OIDC | Staged; maintainer approves with 2FA |
+
+Manual runs have a mode selector. Tag pushes use the `NPM_PUBLISH_MODE` variable
+in the GitHub `npm` environment, defaulting to `publish`. Mode selection is explicit:
+leaving a token secret behind never switches an OIDC release to token authentication.
+Only `bootstrap` exposes the secret, and only to the final publication step.
+
+### First release: 0.0.1
+
+1. Create an npm account, verify its email and enable 2FA. Verify package names
+   and repository metadata, and review the release checklist.
+2. In GitHub Settings → Environments → `npm`, add a short-lived granular npm
+   token with write permission to create both new packages as secret `NPM_TOKEN`.
+   A stage-only token is sufficient. Do not put the token in the repository.
+3. In the same environment, add variable `NPM_PUBLISH_MODE` = `bootstrap`.
+4. Merge the release changes to `main`, including both versions `0.0.1`, then push
+   tag `v0.0.1`. Creating a GitHub Release with that new tag also triggers the workflow.
+5. After staging succeeds, open npmjs.com → Staged Packages, inspect and approve
+   `dice-3d@0.0.1`, then `dice-3d-react@0.0.1`, with 2FA. A green staging job means
+   uploaded for review, not publicly released. npm initially creates a public
+   `0.0.0-stage` placeholder; the real staged contents remain private until approval.
+
+No local npm login or publish is required for this bootstrap.
+
+### Enable Trusted Publishing after bootstrap
+
+Configure each package on npmjs.com → Settings → Trusted publishing:
 
 | Setting | Value |
 | --- | --- |
@@ -41,55 +71,35 @@ For each package, configure its trusted publisher on npm:
 | Repository | `dice-3d` |
 | Workflow filename | `npm.yml` |
 | Environment | `npm` |
-| Allowed action | Direct publishing (`npm publish`) |
+| Allowed action | Enable `npm publish` for automatic releases; stage-only for manual npm approval |
 
-If a package does not yet exist, bootstrap its first version from a trusted
-local checkout using your npm account, then configure its trusted publisher.
-Check name availability and ownership first. Confirm the project's MIT license
-before the first npm release. The workflow does not publish a first version
-until npm accepts its authentication and ownership configuration.
+Set the GitHub `npm` environment variable `NPM_PUBLISH_MODE` to `publish` (or
+`stage` for approval on every release). A newly configured trusted publisher must
+complete a successful release within two days or be recreated. After verifying
+OIDC, delete the GitHub token secret, revoke the npm token, and set package
+publishing access to require 2FA and disallow traditional tokens. OIDC still works.
 
-Example bootstrap from the commit intended for release:
+Protect `main`, release tags `v*`, and workflow changes with GitHub rulesets.
+The `npm` environment may require reviewers before the release job runs. GitHub
+environment approval and npm staging approval are separate controls.
 
-```sh
-nvm use
-npm ci
-npm run check
-npm run test:e2e
-npm login
-npm publish -w dice-3d --access public
-npm publish -w dice-3d-react --access public
-```
+### Subsequent releases and recovery
 
-Follow npm's current [trusted publishing setup](https://docs.npmjs.com/trusted-publishers/)
-for account-side configuration. Keep the workflow filename and environment in
-sync with the npm settings. Node 26 includes an npm CLI supporting OIDC.
+1. Update both versions, the adapter dependency, lockfile and changelogs.
+2. Merge to `main`, then create and push the matching tag, e.g. `v0.0.2`.
+3. Review the Actions summary. `publish` makes both packages public; `stage`
+   requires npm approval for each, core first.
 
-### Subsequent releases
+Offline preflight: `RELEASE_TAG=v0.0.1 node scripts/publish.mjs --check`.
+Release automation tests: `npm run test:publish` (mock CLI, no registry writes).
 
-1. Update both package versions, the React adapter's core dependency,
-   `package-lock.json` (`npm install --package-lock-only`), and both changelogs.
-2. Merge those changes to `main` and let checks pass.
-3. Tag that commit and push the tag (example version):
+Publishing both packages is not atomic. On retry the script skips already public
+versions; registry errors other than E404 stop the job before any package writes.
+If a version is already staged, inspect and approve it rather than staging it again.
+If rejected, follow npm's version reuse rules; never move a release tag to changed code.
+The script does not automatically reject or approve staged versions. Published
+versions are immutable, and skipped versions are not compared to local source.
 
-   ```sh
-   git tag -a v0.2.0 -m "Release 0.2.0"
-   git push origin v0.2.0
-   ```
-
-4. Review the Publish npm packages workflow; approve its environment if required.
-
-Local preflight: `RELEASE_TAG=v0.2.0 node scripts/publish.mjs --check`.
-This validates versions without accessing npm or publishing anything.
-
-If core succeeds and the adapter fails, fix the authentication/environment issue
-and rerun the same tag. Registry preflight skips already published versions and
-publishes the missing package. Registry failures other than E404 stop the job.
-Published versions are immutable; skipped versions are not compared with local
-source. Never reuse an existing version for changed code. Publishing two packages
-is not atomic. To undo a broken demo, revert the change on `main`; to fix a package,
-publish a new version instead of moving an existing tag.
-
-Workflow actions are pinned to commit SHAs. Update those pins deliberately when
-upgrading Actions. npm publishing is separate from Pages and never happens on
-an ordinary push to `main`.
+References: [Trusted Publishing](https://docs.npmjs.com/trusted-publishers/),
+[staged publishing](https://docs.npmjs.com/staged-publishing/), and
+[npm stage CLI](https://docs.npmjs.com/cli/v12/commands/npm-stage/).

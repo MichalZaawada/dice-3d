@@ -1,6 +1,6 @@
 {
   "name": "dice-3d-react",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "React adapter for dice-3d: a <D20View> component.",
   "license": "MIT",
   "type": "module",
@@ -28,7 +28,7 @@
     "CHANGELOG.md"
   ],
   "dependencies": {
-    "dice-3d": "^0.1.0"
+    "dice-3d": "^0.0.1"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0"

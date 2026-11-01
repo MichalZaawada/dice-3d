@@ -1,8 +1,16 @@
-import { readFileSync } from 'node:fs';
+import { appendFileSync, readFileSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
-const packages = ['core', 'react'].map((directory) =>
-  JSON.parse(readFileSync(new URL(`../packages/${directory}/package.json`, import.meta.url), 'utf8')));
+const packages = ['core', 'react'].map((directory) => ({
+  ...JSON.parse(readFileSync(new URL(`../packages/${directory}/package.json`, import.meta.url), 'utf8')),
+  directory,
+}));
+const mode = process.env.NPM_PUBLISH_MODE || 'publish';
+if (!['publish', 'bootstrap', 'stage'].includes(mode)) {
+  throw new Error('NPM_PUBLISH_MODE must be publish, bootstrap or stage.');
+}
+const staged = mode !== 'publish';
 const version = packages[0].version;
 const tag = process.env.RELEASE_TAG;
 if (!/^\d+\.\d+\.\d+$/.test(version) || tag !== `v${version}` || packages[1].version !== version) {
@@ -13,6 +21,12 @@ if (packages[1].dependencies['dice-3d'] !== `^${version}`) {
 }
 console.log(`Validated ${tag}: ${packages.map((pkg) => pkg.name).join(', ')}`);
 if (!process.argv.includes('--check')) {
+  if (mode === 'bootstrap' && !process.env.NODE_AUTH_TOKEN) {
+    throw new Error('Bootstrap requires the npm environment secret NPM_TOKEN.');
+  }
+  if (mode !== 'bootstrap' && process.env.NODE_AUTH_TOKEN) {
+    throw new Error('OIDC modes must not use NODE_AUTH_TOKEN.');
+  }
   // Preflight both versions before publishing either; network errors must fail closed.
   const pending = packages.filter((pkg) => {
     const result = spawnSync('npm', ['view', `${pkg.name}@${version}`, 'version', '--json', '--registry=https://registry.npmjs.org'], { encoding: 'utf8' });
@@ -28,6 +42,22 @@ if (!process.argv.includes('--check')) {
     return true;
   });
   for (const pkg of pending) {
-    execFileSync('npm', ['publish', '-w', pkg.name, '--access', 'public', '--provenance', '--registry=https://registry.npmjs.org'], { stdio: 'inherit' });
+    const command = staged ? ['stage', 'publish'] : ['publish'];
+    try {
+      execFileSync('npm', [...command, '--access', 'public', '--provenance', '--registry=https://registry.npmjs.org'], {
+        cwd: fileURLToPath(new URL(`../packages/${pkg.directory}/`, import.meta.url)),
+        stdio: 'inherit',
+      });
+    } catch (error) {
+      if (staged) console.error('If this version is already staged, approve or reject it on npm before retrying; staged versions cannot be overwritten.');
+      throw error;
+    }
+  }
+  const summary = staged
+    ? 'Staging finished. Approve dice-3d first, then dice-3d-react in npm Staged Packages with 2FA. Already published versions were skipped.'
+    : 'Publishing finished. Already published versions were skipped.';
+  console.log(summary);
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### ${tag} (${mode})\n\n${summary}\n`);
   }
 }

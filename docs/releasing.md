@@ -17,8 +17,10 @@ Before the first npm release of `dice-3d` and `dice-3d-react`:
    (see [testing.md](testing.md)); the p95 target is ≤ 16.7 ms.
 6. Update both `CHANGELOG.md` files and versions (SemVer; before 1.0 contract changes need
    migration notes).
-7. Configure npm trusted publishing, then push the matching stable release tag.
-   The pipeline publishes core before the adapter. See the deployment guide for first-release bootstrap.
+7. For the first release, configure the `bootstrap` mode and stage-only token in
+   the GitHub `npm` environment, push the matching stable tag, and approve both
+   packages on npm with 2FA (core first). Then configure Trusted Publishing for
+   subsequent releases. See the deployment guide for exact settings.
 
 ## Repository
 

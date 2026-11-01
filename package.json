@@ -24,7 +24,8 @@
     "templates": "node scripts/generate-templates.mjs",
     "size": "node scripts/size.mjs",
     "pack:verify": "node scripts/verify-pack.mjs",
-    "check": "npm run lint && npm run build:packages && npm run typecheck && npm run test && npm run build:examples && npm run size && npm run pack:verify",
+    "test:publish": "node --test scripts/publish.test.mjs",
+    "check": "npm run lint && npm run test:publish && npm run build:packages && npm run typecheck && npm run test && npm run build:examples && npm run size && npm run pack:verify",
     "demo": "npm run dev -w dice-3d-example-vanilla",
     "demo:build": "node scripts/build-demo.mjs"
   },

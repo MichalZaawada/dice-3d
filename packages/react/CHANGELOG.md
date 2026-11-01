@@ -1,6 +1,6 @@
 # Changelog — dice-3d-react
 
-## 0.1.0 — unreleased
+## 0.0.1 — 2026-11-01
 
 Initial release: `<D20View>` with `value`, `motion`, `theme`, `skin`, `maxPixelRatio`,
 `className`, `style`, `onError` and a ref handle (`rollTo`, `orientTo`, `getSnapshot`).

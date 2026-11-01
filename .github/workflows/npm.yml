@@ -3,6 +3,13 @@ on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'publish: OIDC; bootstrap: token + 2FA approval; stage: OIDC + 2FA approval'
+        type: choice
+        options: [publish, bootstrap, stage]
+        default: publish
+        required: true
 permissions:
   contents: read
 concurrency:
@@ -14,9 +21,12 @@ jobs:
     uses: ./.github/workflows/ci.yml
   publish:
     needs: checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     environment: npm
+    env:
+      RELEASE_TAG: ${{ github.ref_name }}
+      NPM_PUBLISH_MODE: ${{ inputs.mode || vars.NPM_PUBLISH_MODE || 'publish' }}
     permissions:
       contents: read
       id-token: write
@@ -30,14 +40,16 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version-file: .nvmrc
-          cache: npm
+          package-manager-cache: false
           registry-url: https://registry.npmjs.org
-      - run: npm ci
+      - name: Install npm with staged publishing support
+        run: npm install --global npm@12.2.1
       - run: node scripts/publish.mjs --check
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
+      - run: npm ci
       - run: npm run build:packages
-      - name: Publish core, then React adapter using npm trusted publishing
+      - run: npm run pack:verify
+      - name: Publish or stage packages
         run: node scripts/publish.mjs
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
+          # Tokens are exposed only to the explicit first-release bootstrap mode.
+          NODE_AUTH_TOKEN: ${{ env.NPM_PUBLISH_MODE == 'bootstrap' && secrets.NPM_TOKEN || '' }}
