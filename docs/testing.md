@@ -64,3 +64,19 @@ Playwright 1.64.1 with headless Chromium 156, Firefox 157 and WebKit 27.2. This 
 - Context loss is simulated with `WEBGL_lose_context`; real GPU resets are not reproduced.
 - Hidden-tab pausing is verified with controlled time in unit tests, not in a real background tab.
 - The visual review is manual: the screenshots are produced, not compared against baselines.
+
+## Linux CI rendering
+
+The quality workflow uses Ubuntu 24.04, Mesa software rendering (`llvmpipe`)
+and Xvfb. Firefox runs headed on Linux CI so WebGL2 has an X display; local
+runs and the other engines keep their headless defaults. Software WebGL is
+explicitly allowed in the Firefox test profile. No browser tests are skipped.
+To reproduce on a Linux host with Playwright system dependencies installed:
+
+```sh
+CI=1 LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe xvfb-run --auto-servernum npm run test:e2e
+```
+
+Cross-origin image fixtures must be valid PNGs, including chunk CRCs. Some
+platform decoders tolerate invalid CRCs while WebKit on Linux rejects them
+before the texture-upload test can run.

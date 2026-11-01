@@ -5,6 +5,7 @@ export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.e2e.ts',
   fullyParallel: true,
+  workers: process.env.CI ? 1 : undefined,
   reporter: [['list']],
   timeout: 60_000,
   use: {
@@ -18,7 +19,20 @@ export default defineConfig({
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+    {
+      name: 'firefox',
+      use: {
+        ...devices['Desktop Firefox'],
+        // Linux headless Firefox has no GL display; CI supplies Xvfb and Mesa.
+        headless: !(process.env.CI && process.platform === 'linux'),
+        launchOptions: {
+          firefoxUserPrefs: {
+            'webgl.force-enabled': true,
+            'webgl.forbid-software': false,
+          },
+        },
+      },
+    },
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
   ],
 });

@@ -231,8 +231,9 @@ test.describe('D20 in a real browser', () => {
 
   test('invalid or failing skins keep the previous appearance', async ({ page }) => {
     await page.route('http://cross-origin.test/**', async (route) => {
+      // Valid CRCs are required by WebKit's Linux PNG decoder.
       const png = Buffer.from(
-        'iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAAEUlEQVR42mP8z8Dwn4GBgQEAJwQC/0pv0SoAAAAASUVORK5CYII=',
+        'iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAADklEQVR4nGP4z8DwH4QBEfcD/ePF9e8AAAAASUVORK5CYII=',
         'base64',
       );
       await route.fulfill({ status: 200, contentType: 'image/png', body: png });
